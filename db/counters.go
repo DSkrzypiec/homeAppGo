@@ -1,5 +1,13 @@
 package db
 
+import (
+	"time"
+
+	"github.com/rs/zerolog/log"
+)
+
+const dbCounterPerfix = "db/counters"
+
 type WaterCounterEntry struct {
 	Date            string
 	ColdWaterLiters int
@@ -11,9 +19,16 @@ type WaterCounterEntry struct {
 func (c *Client) WaterData(page, pageSize int) ([]WaterCounterEntry, error) {
 	waterData := make([]WaterCounterEntry, 0, pageSize)
 
+	log.Info().Int("page", page).Int("pageSize", pageSize).
+		Msgf("[%s] start reading water counter data", dbCounterPerfix)
+	startTs := time.Now()
+
 	rows, qErr := c.dbConn.Query(waterMeasuresQuery(), pageSize, rowsToSkip(page, pageSize))
 	if qErr != nil {
-		// logger.Errorf("[%s] Query failed for technologies '[%s]': %s", TechName,
+		log.Error().Err(qErr).
+			Int("page", page).
+			Int("pageSize", pageSize).
+			Msg("failed waterMeasuresQuery query")
 		return waterData, qErr
 	}
 
@@ -22,11 +37,14 @@ func (c *Client) WaterData(page, pageSize int) ([]WaterCounterEntry, error) {
 	for rows.Next() {
 		sErr := rows.Scan(&date, &coldWater, &hotWater)
 		if sErr != nil {
-			// logger.Errorf("[%s] Error while scanning query for techs '[%s]': %s",
+			log.Warn().Err(sErr).Msgf("[%s] while scanning results of waterMeasuresQuery", dbCounterPerfix)
 			continue
 		}
 		waterData = append(waterData, WaterCounterEntry{date, coldWater, hotWater})
 	}
+	elapsed := time.Since(startTs)
+	log.Info().Int("rowsLoaded", len(waterData)).Dur("durationMillis", elapsed).
+		Msgf("[%s] finished reading water counter data", dbCounterPerfix)
 
 	return waterData, nil
 }
@@ -41,9 +59,16 @@ type EnergyCounterEntry struct {
 func (c *Client) EnergyData(page, pageSize int) ([]EnergyCounterEntry, error) {
 	energyData := make([]EnergyCounterEntry, 0, pageSize)
 
+	log.Info().Int("page", page).Int("pageSize", pageSize).
+		Msgf("[%s] start reading energy counter data", dbCounterPerfix)
+	startTs := time.Now()
+
 	rows, qErr := c.dbConn.Query(energyMeasuresQuery(), pageSize, rowsToSkip(page, pageSize))
 	if qErr != nil {
-		// logger.Errorf("[%s] Query failed for technologies '[%s]': %s", TechName,
+		log.Error().Err(qErr).
+			Int("page", page).
+			Int("pageSize", pageSize).
+			Msg("failed energyMeasuresQuery query")
 		return energyData, qErr
 	}
 
@@ -52,11 +77,14 @@ func (c *Client) EnergyData(page, pageSize int) ([]EnergyCounterEntry, error) {
 	for rows.Next() {
 		sErr := rows.Scan(&date, &energy)
 		if sErr != nil {
-			// logger.Errorf("[%s] Error while scanning query for techs '[%s]': %s",
+			log.Warn().Err(sErr).Msgf("[%s] while scanning results of energyMeasuresQuery", dbCounterPerfix)
 			continue
 		}
 		energyData = append(energyData, EnergyCounterEntry{date, energy})
 	}
+	elapsed := time.Since(startTs)
+	log.Info().Int("rowsLoaded", len(energyData)).Dur("durationMillis", elapsed).
+		Msgf("[%s] finished reading energy counter data", dbCounterPerfix)
 
 	return energyData, nil
 }

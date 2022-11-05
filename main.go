@@ -40,6 +40,7 @@ func main() {
 }
 
 func setupZerolog() {
+	zerolog.DurationFieldUnit = time.Millisecond
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)                                               // TODO: make flag for this
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339}) // TODO: make flag for this
 }

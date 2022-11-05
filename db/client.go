@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/rs/zerolog/log"
 	_ "modernc.org/sqlite"
 )
 
@@ -16,6 +17,7 @@ type Client struct {
 func NewClient(connString string) (*Client, error) {
 	db, dbErr := sql.Open("sqlite", connString)
 	if dbErr != nil {
+		log.Error().Err(dbErr).Msgf("Couldn't connect to SQLite [%s]", connString)
 		return nil, fmt.Errorf("cannot connect to SQLite DB: %w", dbErr)
 	}
 
