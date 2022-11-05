@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {{ template "common-header" }}
+</head>
+
+<body>
+    {{ template "common-logo" }}
+    {{ template "common-menu" }}
+    <h1>Counters</h1>
+
+    <a href="/counters">Show counters entries</a>
+
+    <h2>Water</h2>
+    <form class="pure-form pure-form-aligned" method="POST" action="/counters-insert">
+        <fieldset>
+            <div class="pure-control-group">
+                <label for="aligned-name">Date</label>
+                <input type="date" name="date" id="aligned-name" placeholder="2022-11-03" />
+            </div>
+            <div class="pure-control-group">
+                <label for="aligned-password">Cold water</label>
+                <input type="number" name="cold-water" id="aligned-password" placeholder="123312" />
+            </div>
+            <div class="pure-controls">
+                <button type="submit" class="pure-button pure-button-primary">Submit</button>
+            </div>
+        </fieldset>
+    </form>
+</body>
+</html>

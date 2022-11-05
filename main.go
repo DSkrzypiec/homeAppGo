@@ -4,21 +4,44 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
+	"homeApp/controller"
+	"homeApp/db"
 	"homeApp/front"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+
+	_ "modernc.org/sqlite"
 )
 
 const SessCookieName = "sessioncookie"
 
 func main() {
+	setupZerolog()
+
+	dbClient, dbErr := db.NewClient("file:test.db?cache=shared&mode=rw")
+	if dbErr != nil {
+		log.Fatal().Err(dbErr).Msg("Cannot connect to SQLite")
+	}
+
+	counterContr := controller.Counters{DbClient: dbClient}
+
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/login", loginHandler)
-	http.Handle("/counters", checkAuth(http.HandlerFunc(countersHandler)))
+	http.Handle("/counters", checkAuth(http.HandlerFunc(counterContr.CountersViewHandler)))
+	http.Handle("/counters-new", checkAuth(http.HandlerFunc(counterContr.CountersInsertForm)))
 
-	fmt.Println("Listening on :8080...")
+	log.Info().Msg("Listening on :8080...")
 	http.ListenAndServe(":8080", nil)
+}
+
+func setupZerolog() {
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)                                               // TODO: make flag for this
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339}) // TODO: make flag for this
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -54,11 +77,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("I don't know you!")
 	}
 	http.Redirect(w, r, "/", http.StatusSeeOther)
-}
-
-func countersHandler(w http.ResponseWriter, _ *http.Request) {
-	tmpl := front.Counters()
-	tmpl.Execute(w, nil)
 }
 
 func checkAuth(next http.Handler) http.Handler {

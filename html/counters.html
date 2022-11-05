@@ -8,5 +8,45 @@
     {{ template "common-logo" }}
     {{ template "common-menu" }}
     <h1>Counters</h1>
+
+    <a href="/counters-new">Insert new measurements</a>
+
+    <h2>Water</h2>
+    <table class="pure-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Cold Water [l]</th>
+                <th>How Water [l]</th>
+            </tr>
+        </thead>
+        <tbody>
+        {{ range .WaterData }}
+            <tr>
+                <td>{{.Date}}</td>
+                <td>{{.ColdWaterLiters}}</td>
+                <td>{{.HotWaterLiters}}</td>
+            </tr>
+        {{ end }}
+        </tbody>
+    </table>
+
+    <h2>Energy</h2>
+    <table class="pure-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Energy [kWh]</th>
+            </tr>
+        </thead>
+        <tbody>
+        {{ range .EnergyData }}
+            <tr>
+                <td>{{.Date}}</td>
+                <td>{{.EnergyKwh}}</td>
+            </tr>
+        {{ end }}
+        </tbody>
+    </table>
 </body>
 </html>
