@@ -1,3 +1,16 @@
+CREATE TABLE IF NOT EXISTS users (
+    UserId INT NOT NULL,
+    Email TEXT NOT NULL,
+    Username TEXT NOT NULL,
+    PasswordHashed TEXT NOT NULL,
+    Salt TEXT NOT NULL,
+    IsActive INT NOT NULL DEFAULT 1,
+    CreateDate TEXT NOT NULL DEFAULT CURRENT_DATE,
+
+    PRIMARY KEY (UserId),
+    UNIQUE(Username)
+);
+
 CREATE TABLE IF NOT EXISTS energyCounter (
     Date TEXT NOT NULL,
     EnergyKwh REAL NOT NULL,
