@@ -22,7 +22,7 @@ var ErrInvalidUsernameOrPass = errors.New("invalid username or password")
 // authentication failed, then error should be non empty.
 type UserAuthenticator interface {
 	IsUserValid(username, password string) (string, error)
-	IsJwtTokenValid(jwtString string) (bool, error)
+	IsJwtTokenValid(jwtString string) (bool, int, error)
 }
 
 // UserAuth performs user authentication against user data in the main
@@ -35,7 +35,7 @@ type UserAuth struct {
 
 // IsUserValid perform user authentication. Password is combined with user's salt,
 // hashed (SHA256) and compared with originally set hashed password.
-func (ua *UserAuth) IsUserValid(username, password string) (string, error) {
+func (ua UserAuth) IsUserValid(username, password string) (string, error) {
 	startTs := time.Now()
 	log.Info().Str("username", username).Msgf("[%s] start user authentication", authUserPrefix)
 
@@ -67,9 +67,9 @@ func (ua *UserAuth) IsUserValid(username, password string) (string, error) {
 
 // IsJwtTokenValid verifies whenever given JWT string is valid. That means was
 // generated and signed by this backend for existing user.
-func (ua *UserAuth) IsJwtTokenValid(jwtString string) (bool, error) {
+func (ua UserAuth) IsJwtTokenValid(jwtString string) (bool, int, error) {
 	startTs := time.Now()
-	log.Info().Str("jwt", jwtString).Msgf("[%s] start jwt validation", authUserPrefix)
+	log.Info().Msgf("[%s] start jwt validation", authUserPrefix)
 
 	token, err := jwt.Parse(jwtString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -80,37 +80,38 @@ func (ua *UserAuth) IsJwtTokenValid(jwtString string) (bool, error) {
 	if err != nil {
 		log.Error().Err(err).Str("jwt", jwtString).
 			Msgf("[%s] cannot parse given JWT")
-		return false, err
+		return false, -1, err
 	}
 
 	if !token.Valid {
 		invalidErr := fmt.Errorf("token is no longer valid at %v", time.Now())
 		log.Error().Err(invalidErr).Msgf("[%s] jwt is no longer valid", authUserPrefix)
-		return false, invalidErr
+		return false, -1, invalidErr
 	}
 
 	claims, claimsOk := token.Claims.(jwt.MapClaims)
 	if !claimsOk {
 		noClaimsErr := fmt.Errorf("token has not claims")
 		log.Error().Err(noClaimsErr).Msgf("[%s] jwt has no claims", authUserPrefix)
-		return false, noClaimsErr
+		return false, -1, noClaimsErr
 	}
 
 	userId, isOk := claims["userId"]
 	if !isOk {
 		noUserId := fmt.Errorf("token has not userId claim")
 		log.Error().Err(noUserId).Msgf("[%s] jwt has no userId claim", authUserPrefix)
-		return false, noUserId
+		return false, -1, noUserId
 	}
 
+	userIdInt := int(userId.(float64))
 	elapsed := time.Since(startTs)
-	log.Info().Str("jwt", jwtString).Int("userId", userId.(int)).
+	log.Info().Int("userId", userIdInt).
 		Dur("duration", elapsed).Msgf("[%s] finished jwt validation", authUserPrefix)
 
-	return true, nil
+	return true, userIdInt, nil
 }
 
-func (ua *UserAuth) prepJwtString(user db.User) (string, error) {
+func (ua UserAuth) prepJwtString(user db.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"userId": user.UserId,
 		"exp":    time.Now().UTC().Add(time.Duration(ua.JwtExpMinutes) * time.Minute).Unix(),
@@ -124,7 +125,7 @@ func (ua *UserAuth) prepJwtString(user db.User) (string, error) {
 	return tokenString, nil
 }
 
-func (ua *UserAuth) prepHashedPassword(givenPassword, salt string) string {
+func (ua UserAuth) prepHashedPassword(givenPassword, salt string) string {
 	givenPassHashed := sha256.Sum256([]byte(givenPassword + salt))
 	return fmt.Sprintf("%x", givenPassHashed)
 }
