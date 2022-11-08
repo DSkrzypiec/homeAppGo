@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -15,7 +16,11 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const SessCookieName = "session"
+const (
+	SessCookieName       = "session"
+	TelegramBotTokenEnv  = "HOMEAPP_TELEGRAM_BOT_TOKEN"
+	TelegramChannelIdEnv = "HOMEAPP_TELEGRAM_CHANNEL_ID"
+)
 
 func main() {
 	setupZerolog()
@@ -25,14 +30,30 @@ func main() {
 		log.Fatal().Err(dbErr).Msg("Cannot connect to SQLite")
 	}
 
+	// Telegram info
+	telegramBotToken := os.Getenv(TelegramBotTokenEnv)
+	telegramChannelId := os.Getenv(TelegramChannelIdEnv)
+	fmt.Printf("%s | %s\n", telegramBotToken, telegramChannelId)
+
 	// Long-lived
-	counterContr := controller.Counters{DbClient: dbClient}
+	// httpClient := http.Client{Timeout: 60 * time.Second}
+	// telegramClient := telegram.NewClient(&httpClient, telegramBotToken, telegramChannelId)
 	userAuth := auth.UserAuth{
 		DbClient:      dbClient,
 		JwtSigningKey: []byte("crap"), // TODO randomly generate key on each program start
 		JwtExpMinutes: 10,             // TODO
 	}
 	authHandlerMan := auth.HandlerManager{UserAuthenticator: userAuth}
+	counterContr := controller.Counters{DbClient: dbClient}
+
+	/*
+		telegramClient.SendMessage("HomeApp started!")
+		r, rErr := telegramClient.CheckMessageWithPattern("damian", 60*time.Second)
+		if rErr != nil {
+			log.Fatal().Err(rErr)
+		}
+		log.Info().Bool("matchResult", r).Msg("Got Telegram match")
+	*/
 
 	http.HandleFunc("/", controller.LoginForm)
 	http.HandleFunc("/login", authHandlerMan.Login)
