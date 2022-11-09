@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {{ template "common-header" }}
+    <style>
+        {{ template "common-css" }}
+    </style>
+</head>
+
+<body>
+    {{ template "common-logo" }}
+    {{ template "common-menu" }}
+
+    <a href="/document-new">Insert new document</a>
+
+    <h2>Documents</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Document</th>
+                <th>Document Date</th>
+                <th>Category</th>
+            </tr>
+        </thead>
+        <tbody>
+        {{ range .Documents }}
+            <tr>
+                <td><a href="/document/{{.Id}}" target="_blank">{{.Name}}</a></td>
+                <td>{{.DocumentDate}}</td>
+                <td>{{.Category}}</td>
+            </tr>
+        {{ end }}
+        </tbody>
+    </table>
+</body>
+</html>

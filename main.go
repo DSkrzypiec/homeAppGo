@@ -43,12 +43,14 @@ func main() {
 	authHandlerMan := auth.HandlerManager{UserAuthenticator: userAuth}
 	loginContr := controller.LoginForm{AuthManager: authHandlerMan}
 	counterContr := controller.Counters{DbClient: dbClient}
+	documentsContr := controller.Documents{DbClient: dbClient}
 
 	http.HandleFunc("/", loginContr.LoginFormHandler)
 	http.HandleFunc("/login", authHandlerMan.Login)
 	http.HandleFunc("/home", authHandlerMan.CheckAuth(controller.Home))
 	http.HandleFunc("/counters", authHandlerMan.CheckAuth(counterContr.CountersViewHandler))
 	http.HandleFunc("/counters-new", authHandlerMan.CheckAuth(counterContr.CountersInsertForm))
+	http.HandleFunc("/documents", authHandlerMan.CheckAuth(documentsContr.DocumentsViewHandler))
 	http.HandleFunc("/logout", authHandlerMan.TerminateSession)
 
 	log.Info().Msg("Listening on :8080...")
