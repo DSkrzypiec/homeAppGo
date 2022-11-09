@@ -128,6 +128,40 @@ func (hm *HandlerManager) IsSessionCookieValid(r *http.Request) (bool, error) {
 	return true, nil
 }
 
+// Terminates session - basically delete session cookie.
+func (hm *HandlerManager) TerminateSession(w http.ResponseWriter, r *http.Request) {
+	startTs := time.Now()
+
+	sessCookie, cookieErr := r.Cookie(SessCookieName)
+	if cookieErr != nil {
+		log.Error().Err(cookieErr).
+			Msgf("[%s] there is no session cookie - session is already terminated", authHandlerPrefix)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	isValid, userId, validErr := hm.UserAuthenticator.IsJwtTokenValid(sessCookie.Value)
+	if validErr != nil {
+		log.Error().Err(validErr).Int("userId", userId).Dur("duration", time.Since(startTs)).
+			Msgf("[%s] there was error while validating JWT - deleting cooking anyway", authHandlerPrefix)
+		http.SetCookie(w, expiredSessionCookie())
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+	if !isValid {
+		log.Error().Int("userId", userId).Dur("duration", time.Since(startTs)).
+			Msgf("[%s] session expired or credentials are incorrect, redirecting to login", authHandlerPrefix)
+		http.SetCookie(w, expiredSessionCookie())
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	http.SetCookie(w, expiredSessionCookie())
+	log.Info().Int("userId", userId).Dur("duration", time.Since(startTs)).
+		Msgf("[%s] session terminated by user [%d]", authHandlerPrefix, userId)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
 // Setting cookie with the same name and expiring time stamp in the past is
 // equivalent of deleting the cookie.
 func expiredSessionCookie() *http.Cookie {
