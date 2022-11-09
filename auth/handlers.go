@@ -43,7 +43,21 @@ func (hm *HandlerManager) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Add 2FA via Telegram optionally
+	twoFaPassed, twoFaErr := hm.UserAuthenticator.Check2FA(name)
+	if twoFaErr != nil {
+		log.Error().Err(twoFaErr).Str("username", name).Dur("duration", time.Since(startTs)).
+			Msgf("[%s] 2FA via Telegram failed", authHandlerPrefix)
+		http.SetCookie(w, expiredSessionCookie())
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+	if twoFaErr == nil && !twoFaPassed {
+		log.Error().Str("username", name).Dur("duration", time.Since(startTs)).
+			Msgf("[%s] 2FA via Telegram does not succeeded, username was not matched", authHandlerPrefix)
+		http.SetCookie(w, expiredSessionCookie())
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
 
 	sessCookie := &http.Cookie{
 		Name:     SessCookieName,
@@ -93,6 +107,25 @@ func (hm *HandlerManager) CheckAuth(next func(http.ResponseWriter, *http.Request
 		// It's fine! Letting traffic flow
 		next(w, r)
 	}
+}
+
+// IsSessionCookieValid verifies whenever given request has valid session
+// cookie.
+func (hm *HandlerManager) IsSessionCookieValid(r *http.Request) (bool, error) {
+	sessCookie, cookieErr := r.Cookie(SessCookieName)
+	if cookieErr != nil {
+		return false, cookieErr
+	}
+
+	isValid, _, validErr := hm.UserAuthenticator.IsJwtTokenValid(sessCookie.Value)
+	if validErr != nil {
+		return false, validErr
+	}
+	if !isValid {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 // Setting cookie with the same name and expiring time stamp in the past is

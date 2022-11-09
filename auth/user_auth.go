@@ -6,13 +6,17 @@ import (
 	"fmt"
 	"time"
 
+	"homeApp/auth/telegram"
 	"homeApp/db"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/rs/zerolog/log"
 )
 
-const authUserPrefix = "auth/user"
+const (
+	authUserPrefix = "auth/user"
+	twoFATimout    = 60 * time.Second
+)
 
 var ErrInvalidUsernameOrPass = errors.New("invalid username or password")
 
@@ -23,14 +27,16 @@ var ErrInvalidUsernameOrPass = errors.New("invalid username or password")
 type UserAuthenticator interface {
 	IsUserValid(username, password string) (string, error)
 	IsJwtTokenValid(jwtString string) (bool, int, error)
+	Check2FA(username string) (bool, error)
 }
 
 // UserAuth performs user authentication against user data in the main
 // database.
 type UserAuth struct {
-	DbClient      *db.Client
-	JwtSigningKey []byte
-	JwtExpMinutes int
+	DbClient       *db.Client
+	JwtSigningKey  []byte
+	JwtExpMinutes  int
+	TelegramClient *telegram.Client
 }
 
 // IsUserValid perform user authentication. Password is combined with user's salt,
@@ -109,6 +115,22 @@ func (ua UserAuth) IsJwtTokenValid(jwtString string) (bool, int, error) {
 		Dur("duration", elapsed).Msgf("[%s] finished jwt validation", authUserPrefix)
 
 	return true, userIdInt, nil
+}
+
+// Check2FA verifies second step in two-factor authentication which is via
+// Telegram channel. This step might be turned off via initial configuration.
+// In this case TelegramClient should be nil.
+func (ua UserAuth) Check2FA(username string) (bool, error) {
+	if ua.TelegramClient == nil { // 2FA is turned off in this case
+		return true, nil
+	}
+
+	twoFaPassed, twoFaErr := ua.TelegramClient.CheckMessageWithPattern(username, twoFATimout)
+	if twoFaErr != nil {
+		return false, twoFaErr
+	}
+
+	return twoFaPassed, nil
 }
 
 func (ua UserAuth) prepJwtString(user db.User) (string, error) {

@@ -1,28 +1,25 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"homeApp/auth"
+	"homeApp/auth/telegram"
 	"homeApp/controller"
 	"homeApp/db"
 
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	_ "modernc.org/sqlite"
 )
 
 const (
-	SessCookieName       = "session"
-	TelegramBotTokenEnv  = "HOMEAPP_TELEGRAM_BOT_TOKEN"
-	TelegramChannelIdEnv = "HOMEAPP_TELEGRAM_CHANNEL_ID"
+	SessCookieName = "session"
 )
 
 func main() {
+	config := ParseConfigFlags()
 	setupZerolog()
 
 	dbClient, dbErr := db.NewClient("file:test.db?cache=shared&mode=rw")
@@ -30,20 +27,21 @@ func main() {
 		log.Fatal().Err(dbErr).Msg("Cannot connect to SQLite")
 	}
 
-	// Telegram info
-	telegramBotToken := os.Getenv(TelegramBotTokenEnv)
-	telegramChannelId := os.Getenv(TelegramChannelIdEnv)
-	fmt.Printf("%s | %s\n", telegramBotToken, telegramChannelId)
-
 	// Long-lived
-	// httpClient := http.Client{Timeout: 60 * time.Second}
-	// telegramClient := telegram.NewClient(&httpClient, telegramBotToken, telegramChannelId)
+	httpClient := http.Client{Timeout: 60 * time.Second}
+	var telegramClient *telegram.Client = nil
+	if config.UseTelegram2FA {
+		telegramClient = telegram.NewClient(&httpClient, config.Telegram.BotToken, config.Telegram.ChannelId)
+	}
+
 	userAuth := auth.UserAuth{
-		DbClient:      dbClient,
-		JwtSigningKey: []byte("crap"), // TODO randomly generate key on each program start
-		JwtExpMinutes: 10,             // TODO
+		DbClient:       dbClient,
+		JwtSigningKey:  []byte("crap"), // TODO randomly generate key on each program start
+		JwtExpMinutes:  10,             // TODO
+		TelegramClient: telegramClient,
 	}
 	authHandlerMan := auth.HandlerManager{UserAuthenticator: userAuth}
+	loginContr := controller.LoginForm{AuthManager: authHandlerMan}
 	counterContr := controller.Counters{DbClient: dbClient}
 
 	/*
@@ -55,7 +53,7 @@ func main() {
 		log.Info().Bool("matchResult", r).Msg("Got Telegram match")
 	*/
 
-	http.HandleFunc("/", controller.LoginForm)
+	http.HandleFunc("/", loginContr.LoginFormHandler)
 	http.HandleFunc("/login", authHandlerMan.Login)
 	http.HandleFunc("/home", authHandlerMan.CheckAuth(controller.Home))
 	http.HandleFunc("/counters", authHandlerMan.CheckAuth(counterContr.CountersViewHandler))
@@ -63,10 +61,4 @@ func main() {
 
 	log.Info().Msg("Listening on :8080...")
 	http.ListenAndServe(":8080", nil)
-}
-
-func setupZerolog() {
-	zerolog.DurationFieldUnit = time.Millisecond
-	zerolog.SetGlobalLevel(zerolog.DebugLevel)                                               // TODO: make flag for this
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339}) // TODO: make flag for this
 }
