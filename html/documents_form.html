@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {{ template "common-header" }}
+    <style>
+        {{ template "common-css" }}
+    </style>
+</head>
+
+<body>
+    {{ template "common-logo" }}
+    {{ template "common-menu" }}
+
+    <a href="/documents">Browse documents</a>
+
+
+    <h2>Upload new document</h2>
+    <div class="document-input-form">
+        <label for="category">Category</label>
+        <select name="category" form="docForm" required>
+          <option value="dyplomy">Dyplomy</option>
+          <option value="samochod">Samochód</option>
+          <option value="mandaty">Mandaty</option>
+          <option value="medyczne">Medyczne</option>
+          <option value="mieszkanie">Mieszkanie</option>
+          <option value="personalne">Personalne</option>
+          <option value="podatki">Podatki</option>
+          <option value="praca">Praca</option>
+          <option value="faktury">Faktury</option>
+          <option value="ubezpieczenia">Ubezpieczenia</option>
+          <option value="cv">CV</option>
+          <option value="ebook">E-Book</option>
+          <option value="inne">Inne</option>
+        </select> </br>
+
+        <form enctype="multipart/form-data" action="/documents/uploadFile" id="docForm" method="post">
+            <label for="documentDate">Document Date</label>
+            <input type="date" name="documentDate" placeholder="2022-11-17"/> </br>
+
+            <label for="documentName">Document Name</label>
+            <input type="text" name="documentName" placeholder="document name" required /> </br>
+
+            <label for="person">Person Involved</label>
+            <input type="text" name="person" placeholder="Damian"/> </br>
+
+            <label for="docFile">Document File</label>
+            <input type="file" name="docFile"
+                 accept=".pdf,.jpeg,.jpg,.gif,.png,.mp4,.zip,.mobi,.epub,.docx,.doc,.xlsx" required /> </br>
+
+            <label for="fileExt">File Extension</label>
+            <input type="text" name="fileExt" value="pdf" /> <br>
+
+            <input type="submit" value="Submit" />
+        </form>
+    </div>
+</body>
+</html>

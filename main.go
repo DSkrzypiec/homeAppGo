@@ -51,6 +51,9 @@ func main() {
 	http.HandleFunc("/counters", authHandlerMan.CheckAuth(counterContr.CountersViewHandler))
 	http.HandleFunc("/counters-new", authHandlerMan.CheckAuth(counterContr.CountersInsertForm))
 	http.HandleFunc("/documents", authHandlerMan.CheckAuth(documentsContr.DocumentsViewHandler))
+	http.HandleFunc("/documents-new", authHandlerMan.CheckAuth(documentsContr.DocumentsInsertForm))
+	http.HandleFunc("/documents/uploadFile", authHandlerMan.CheckAuth(documentsContr.InsertNewDocument))
+	http.HandleFunc("/documentFile", authHandlerMan.CheckAuth(documentsContr.PreviewDocument))
 	http.HandleFunc("/logout", authHandlerMan.TerminateSession)
 
 	log.Info().Msg("Listening on :8080...")
