@@ -28,11 +28,27 @@ type DocumentsList struct {
 }
 
 func (d *Documents) DocumentsViewHandler(w http.ResponseWriter, r *http.Request) {
-	documents, dErr := d.DbClient.Documents()
-	if dErr != nil {
-		log.Error().Err(dErr).Msgf("[%s] cannot load documents from database", contrDocPrefix)
-		http.Redirect(w, r, "/home", http.StatusSeeOther)
-		return
+	r.ParseForm()
+	filterDocPhrase := r.FormValue("docFilter")
+
+	var documents []db.DocumentInfo
+	var dErr error
+
+	if filterDocPhrase == "" {
+		documents, dErr = d.DbClient.Documents()
+		if dErr != nil {
+			log.Error().Err(dErr).Msgf("[%s] cannot load documents from database", contrDocPrefix)
+			http.Redirect(w, r, "/home", http.StatusSeeOther)
+			return
+		}
+	} else {
+		log.Info().Str("filter", filterDocPhrase).Msgf("[%s] loading documents in filtered version", contrDocPrefix)
+		documents, dErr = d.DbClient.DocumentsFiltered(filterDocPhrase)
+		if dErr != nil {
+			log.Error().Err(dErr).Msgf("[%s] cannot load filtered documents from database", contrDocPrefix)
+			http.Redirect(w, r, "/home", http.StatusSeeOther)
+			return
+		}
 	}
 
 	tmpl := front.Documents()

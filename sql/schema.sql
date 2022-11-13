@@ -57,3 +57,33 @@ CREATE TABLE IF NOT EXISTS documentFiles (
     DocumentId INT NOT NULL,
     FileBytes BLOB NOT NULL
 );
+
+-- For full text search on documents
+CREATE VIRTUAL TABLE IF NOT EXISTS documentsFts5 USING fts5(
+    DocumentId,
+    DocumentName,
+    UploadDate,
+    DocumentDate,
+    Category,
+    PersonInvolved,
+    FileExtension
+);
+
+DELETE FROM documentsFts5;
+INSERT INTO documentsFts5 (
+    DocumentId, DocumentName, UploadDate, DocumentDate, Category,
+    PersonInvolved, FileExtension
+)
+SELECT
+    DocumentId,
+    DocumentName,
+    UploadDate,
+    DocumentDate,
+    Category,
+    PersonInvolved,
+    FileExtension
+FROM
+    documents
+ORDER BY
+    DocumentId
+;

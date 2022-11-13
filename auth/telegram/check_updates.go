@@ -122,22 +122,28 @@ func (c *Client) getLastUpdateId() *int {
 	errorDuringLastMsg := false
 	lastMessageResp, lastReqErr := c.getRequest(c.getUpdateLastUrl(), "getUpdateLast")
 	if lastReqErr != nil {
+		log.Error().Err(lastReqErr).Msgf("[%s] failed to getUpdate for last message", teleUpdatesPrefix)
 		errorDuringLastMsg = true
 
 	}
 	var lastMessage []Update
 	lmJsonErr := json.Unmarshal(lastMessageResp.Result, &lastMessage)
 	if lmJsonErr != nil {
+		log.Error().Err(lmJsonErr).Msgf("[%s] failed JSON unmarshal last message", teleUpdatesPrefix)
 		errorDuringLastMsg = true
 	}
 
 	if errorDuringLastMsg {
 		return nil
-	} else {
-		log.Info().Int("lastUpdateId", lastMessage[0].UpdateID).Msgf("[%s] got last update ID", teleUpdatesPrefix)
-		return &lastMessage[0].UpdateID
 	}
 
+	if len(lastMessage) == 0 {
+		log.Info().Msgf("[%s] unmarshaled last update but got zero updates", teleUpdatesPrefix)
+		return nil
+	}
+
+	log.Info().Int("lastUpdateId", lastMessage[0].UpdateID).Msgf("[%s] got last update ID", teleUpdatesPrefix)
+	return &lastMessage[0].UpdateID
 }
 
 func (c *Client) getUpdatesUrl(limit, timeout int, offset *int) string {

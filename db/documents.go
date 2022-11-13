@@ -73,6 +73,47 @@ func (c *Client) Documents() ([]DocumentInfo, error) {
 	return documents, nil
 }
 
+// DocumentsFiltered reads filtered list of all metadata of documents (without content itself).
+// Filtering is done by full text search in the DB using FTS 5.
+func (c *Client) DocumentsFiltered(phrase string) ([]DocumentInfo, error) {
+	startTs := time.Now()
+	documents := make([]DocumentInfo, 0, 500)
+	log.Info().Str("filter", phrase).Msgf("[%s] start reading filtered documents metadata", dbDocsPrefix)
+
+	queryPhrase := fmt.Sprintf(`"%s"*`, phrase)
+	rows, qErr := c.dbConn.Query(documentsFilteredQuery(), queryPhrase)
+	if qErr != nil {
+		log.Error().Err(qErr).Msgf("[%s] documentsFilteredQuery failed", dbDocsPrefix)
+		return documents, qErr
+	}
+
+	var id int
+	var fileSize int64
+	var name, uploadDate, category, fileExt string
+	var documentDate, person *string
+	for rows.Next() {
+		sErr := rows.Scan(&id, &name, &uploadDate, &documentDate, &category, &person, &fileExt, &fileSize)
+		if sErr != nil {
+			log.Warn().Err(sErr).Msgf("[%s] while scanning results of documentsFilteredQuery", dbDocsPrefix)
+			continue
+		}
+		documents = append(documents, DocumentInfo{
+			Id:             id,
+			Name:           name,
+			UploadDate:     uploadDate,
+			DocumentDate:   documentDate,
+			Category:       category,
+			PersonInvolved: person,
+			FileExtension:  fileExt,
+			FileSizeBytes:  fileSize,
+		})
+	}
+	log.Info().Str("filter", phrase).Int("rowsLoaded", len(documents)).Dur("duration", time.Since(startTs)).
+		Msgf("[%s] finished reading filtered documents info", dbDocsPrefix)
+
+	return documents, nil
+}
+
 // DocumentInsertNew uploads into database information about new document. This
 // is composed of two things - metadata about document and the content.
 func (c *Client) DocumentInsertNew(newDoc NewDocument) error {
@@ -90,14 +131,21 @@ func (c *Client) DocumentInsertNew(newDoc NewDocument) error {
 		log.Error().Err(diErr).Msgf("[%s] cannot get max DocumentId", dbDocsPrefix)
 		return diErr
 	}
+	newDocId := maxDocId + 1
 
-	metaErr := insertDocumentMeta(maxDocId+1, newDoc, tx)
+	metaErr := insertDocumentMeta(newDocId, newDoc, tx)
 	if metaErr != nil {
 		log.Error().Err(metaErr).Msgf("[%s] cannot insert document metadata", dbDocsPrefix)
 		return metaErr
 	}
 
-	contentErr := insertDocumentContent(maxDocId+1, newDoc.DocumentFile, tx)
+	fts5Err := insertDocumentFts5(newDocId, newDoc, tx)
+	if fts5Err != nil {
+		log.Error().Err(fts5Err).Msgf("[%s] cannot insert document FTS5 info", dbDocsPrefix)
+		return fts5Err
+	}
+
+	contentErr := insertDocumentContent(newDocId, newDoc.DocumentFile, tx)
 	if contentErr != nil {
 		log.Error().Err(contentErr).Msgf("[%s] cannot insert document content", dbDocsPrefix)
 		return contentErr
@@ -155,12 +203,23 @@ func insertDocumentMeta(documentId int, newDoc NewDocument, tx *sql.Tx) error {
 	}
 
 	uploadDate := time.Now().Format("2006-01-02")
-	fmt.Println(uploadDate)
 
 	_, qErr := tx.Exec(
 		documentInsertNewMetaQuery(), documentId, newDoc.Name, uploadDate,
 		toNullString(&newDoc.DocumentDate), newDoc.Category, toNullString(&newDoc.PersonInvolved),
 		newDoc.FileExtension, len(newDoc.DocumentFile))
+	if qErr != nil {
+		return qErr
+	}
+	return nil
+}
+
+func insertDocumentFts5(documentId int, newDoc NewDocument, tx *sql.Tx) error {
+	uploadDate := time.Now().Format("2006-01-02")
+	_, qErr := tx.Exec(
+		documentInsertNewFts5Query(), documentId, newDoc.Name, uploadDate,
+		toNullString(&newDoc.DocumentDate), newDoc.Category,
+		toNullString(&newDoc.PersonInvolved), newDoc.FileExtension)
 	if qErr != nil {
 		return qErr
 	}
@@ -206,6 +265,26 @@ func documentsQuery() string {
 	`
 }
 
+func documentsFilteredQuery() string {
+	return `
+	SELECT
+		d.DocumentId,
+		d.DocumentName,
+		d.UploadDate,
+		d.DocumentDate,
+		d.Category,
+		d.PersonInvolved,
+		d.FileExtension,
+		d.FileSize
+	FROM
+		documentsFts5 f
+	INNER JOIN
+		documents d ON f.DocumentId = d.DocumentId
+	WHERE
+		f.documentsFts5 MATCH ?
+	`
+}
+
 func documentInsertNewMetaQuery() string {
 	return `
 	INSERT INTO documents (
@@ -213,6 +292,16 @@ func documentInsertNewMetaQuery() string {
 		FileExtension, FileSize
 	)
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	`
+}
+
+func documentInsertNewFts5Query() string {
+	return `
+	INSERT INTO documentsFts5 (
+		DocumentId, DocumentName, UploadDate, DocumentDate, Category,
+		PersonInvolved, FileExtension
+	)
+	VALUES (?, ?, ?, ?, ?, ?, ?)
 	`
 }
 
