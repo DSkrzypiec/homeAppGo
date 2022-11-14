@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {{ template "common-header" }}
+    <style>
+        {{ template "common-css" }}
+    </style>
+</head>
+
+<body>
+    {{ template "common-logo" }}
+    {{ template "common-menu" }}
+
+    <a href="/finance">Browse finance</a>
+
+    <h2>Upload new transactions</h2>
+
+    <div class="transaction-input-form">
+        <label for="parser-type">File type</label>
+        <select name="parser-type" form="transactionForm" required>
+          <option value="pkoxml">PKO Bank (XML)</option>
+        </select> </br>
+
+        <form enctype="multipart/form-data" action="/finance/upload" id="transactionForm" method="post">
+            <label for="file">File:</label> </br>
+            <input type="file" name="pkoFile" accept=".xml,.json,.csv,.txt" required> </br>
+            <input type="submit" value="Submit" />
+        </form>
+    </div>
+</body>
+</html>
