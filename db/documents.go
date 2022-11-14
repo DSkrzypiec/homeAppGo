@@ -282,6 +282,8 @@ func documentsFilteredQuery() string {
 		documents d ON f.DocumentId = d.DocumentId
 	WHERE
 		f.documentsFts5 MATCH ?
+	ORDER BY
+		d.DocumentId DESC
 	`
 }
 
