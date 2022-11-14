@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -22,7 +23,7 @@ func main() {
 	config := ParseConfigFlags()
 	setupZerolog()
 
-	dbClient, dbErr := db.NewClient("file:test.db?cache=shared&mode=rw")
+	dbClient, dbErr := db.NewClient(fmt.Sprintf("file:%s?cache=shared&mode=rw", config.DatabasePath))
 	if dbErr != nil {
 		log.Fatal().Err(dbErr).Msg("Cannot connect to SQLite")
 	}
@@ -44,6 +45,7 @@ func main() {
 	loginContr := controller.LoginForm{AuthManager: authHandlerMan}
 	counterContr := controller.Counters{DbClient: dbClient}
 	documentsContr := controller.Documents{DbClient: dbClient}
+	finContr := controller.Finance{DbClient: dbClient}
 
 	http.HandleFunc("/", loginContr.LoginFormHandler)
 	http.HandleFunc("/login", authHandlerMan.Login)
@@ -54,6 +56,8 @@ func main() {
 	http.HandleFunc("/documents-new", authHandlerMan.CheckAuth(documentsContr.DocumentsInsertForm))
 	http.HandleFunc("/documents/uploadFile", authHandlerMan.CheckAuth(documentsContr.InsertNewDocument))
 	http.HandleFunc("/documentFile", authHandlerMan.CheckAuth(documentsContr.PreviewDocument))
+	http.HandleFunc("/finance", authHandlerMan.CheckAuth(finContr.FinanceViewHandler))
+	http.HandleFunc("/finance-new", authHandlerMan.CheckAuth(finContr.FinanceInsertForm))
 	http.HandleFunc("/logout", authHandlerMan.TerminateSession)
 
 	log.Info().Msg("Listening on :8080...")

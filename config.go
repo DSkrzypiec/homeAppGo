@@ -15,6 +15,7 @@ const (
 )
 
 type Config struct {
+	DatabasePath   string
 	UseTelegram2FA bool
 	Telegram       *TelegramConfig
 }
@@ -27,6 +28,7 @@ type TelegramConfig struct {
 // Parse or fail.
 func ParseConfigFlags() Config {
 	telegram2fa := flag.Bool("telegram2fa", false, "Use Telegram for two-factor authentication")
+	dbPath := flag.String("dbPath", "test.db", "Path to SQLite Home DB")
 	flag.Parse()
 
 	var telegramConfig *TelegramConfig
@@ -47,6 +49,7 @@ func ParseConfigFlags() Config {
 	}
 
 	return Config{
+		DatabasePath:   *dbPath,
 		UseTelegram2FA: *telegram2fa,
 		Telegram:       telegramConfig,
 	}
