@@ -52,6 +52,7 @@ func main() {
 	http.HandleFunc("/home", authHandlerMan.CheckAuth(controller.Home))
 	http.HandleFunc("/counters", authHandlerMan.CheckAuth(counterContr.CountersViewHandler))
 	http.HandleFunc("/counters-new", authHandlerMan.CheckAuth(counterContr.CountersInsertForm))
+	http.HandleFunc("/counters/upload", authHandlerMan.CheckAuth(counterContr.CountersUploadNew))
 	http.HandleFunc("/documents", authHandlerMan.CheckAuth(documentsContr.DocumentsViewHandler))
 	http.HandleFunc("/documents-new", authHandlerMan.CheckAuth(documentsContr.DocumentsInsertForm))
 	http.HandleFunc("/documents/uploadFile", authHandlerMan.CheckAuth(documentsContr.InsertNewDocument))

@@ -89,6 +89,54 @@ func (c *Client) EnergyData(page, pageSize int) ([]EnergyCounterEntry, error) {
 	return energyData, nil
 }
 
+// CountersInsertNew inserts new counter data into database. Both counters are
+// bundled into SQL transaction.
+func (c *Client) CountersInsertNew(water WaterCounterEntry, energy EnergyCounterEntry) error {
+	startTs := time.Now()
+	log.Info().Msgf("[%s] start inserting counters data", dbCounterPerfix)
+
+	tx, tErr := c.dbConn.Begin()
+	if tErr != nil {
+		log.Error().Err(tErr).Msgf("[%s] cannot start new transaction", dbCounterPerfix)
+		return tErr
+	}
+
+	_, wErr := tx.Exec(waterCounterInsertQuery(), water.Date, water.ColdWaterLiters, water.HotWaterLiters)
+	if wErr != nil {
+		rollErr := tx.Rollback()
+		if rollErr != nil {
+			log.Error().Err(rollErr).Msgf("[%s] SQL TX rollback failed", dbFinPrefix)
+			return rollErr
+		}
+		return wErr
+	}
+
+	_, eErr := tx.Exec(energyCounterInsertQuery(), energy.Date, energy.EnergyKwh)
+	if eErr != nil {
+		rollErr := tx.Rollback()
+		if rollErr != nil {
+			log.Error().Err(rollErr).Msgf("[%s] SQL TX rollback failed", dbFinPrefix)
+			return rollErr
+		}
+		return eErr
+	}
+
+	commErr := tx.Commit()
+	if commErr != nil {
+		log.Error().Err(commErr).Msgf("[%s] couldn't commit SQL transaction", dbFinPrefix)
+		rollErr := tx.Rollback()
+		if rollErr != nil {
+			log.Error().Err(rollErr).Msgf("[%s] SQL TX rollback failed", dbFinPrefix)
+			return rollErr
+		}
+		return commErr
+	}
+
+	log.Info().Dur("duration", time.Since(startTs)).
+		Msgf("[%s] finished inserting counters data", dbCounterPerfix)
+	return nil
+}
+
 func waterMeasuresQuery() string {
 	return `
 		SELECT
@@ -106,6 +154,13 @@ func waterMeasuresQuery() string {
 	`
 }
 
+func waterCounterInsertQuery() string {
+	return `
+		INSERT INTO waterCounter (Date, ColdWaterLiters, HotWaterLiters)
+		VALUES (?, ?, ?)
+	`
+}
+
 func energyMeasuresQuery() string {
 	return `
 		SELECT
@@ -119,6 +174,13 @@ func energyMeasuresQuery() string {
 			?
 		OFFSET
 			?
+	`
+}
+
+func energyCounterInsertQuery() string {
+	return `
+		INSERT INTO energyCounter (Date, EnergyKwh)
+		VALUES (?, ?)
 	`
 }
 

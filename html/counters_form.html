@@ -14,21 +14,35 @@
 
     <a href="/counters">Show counters entries</a>
 
-    <h2>Water</h2>
-    <form class="pure-form pure-form-aligned" method="POST" action="/counters-insert">
+    <h2>Insert new counters state</h2>
+    <form class="pure-form pure-form-aligned" method="POST" action="/counters/upload">
         <fieldset>
             <div class="pure-control-group">
-                <label for="aligned-name">Date</label>
-                <input type="date" name="date" id="aligned-name" placeholder="2022-11-03" />
+                <label for="input-date">Date</label>
+                <input type="date" name="inputDate" id="input-date" placeholder="2022-11-03" />
             </div>
             <div class="pure-control-group">
-                <label for="aligned-password">Cold water</label>
-                <input type="number" name="cold-water" id="aligned-password" placeholder="123312" />
+                <label for="cold-water">Cold water [l]</label>
+                <input type="number" name="coldWater" id="cold-water" placeholder="123312" />
+            </div>
+            <div class="pure-control-group">
+                <label for="hot-water">Hot Water [l]</label>
+                <input type="number" name="hotWater" id="hot-water" placeholder="87234" />
+            </div>
+            <div class="pure-control-group">
+                <label for="energy">Energy [kWh]</label>
+                <input type="number" step="0.1" name="energy" id="energy" placeholder="9874.2" />
             </div>
             <div class="pure-controls">
                 <button type="submit" class="pure-button pure-button-primary">Submit</button>
             </div>
         </fieldset>
     </form>
+
+    {{ if .UploadError }}
+        <h2 style="color: red;">
+            Error: {{ .UploadError }}
+        </h2>
+    {{ end}}
 </body>
 </html>
