@@ -27,5 +27,17 @@
             <input type="submit" value="Submit" />
         </form>
     </div>
+
+    {{ if .Stats }}
+        <p>
+            Uploaded {{ .Stats.NumOfTransactions }} transactions.
+        </p>
+    {{ end }}
+
+    {{ if .UploadError }}
+        <h3 style="color: red;">
+            Error: {{ .UploadError }}
+        </h3>
+    {{ end }}
 </body>
 </html>

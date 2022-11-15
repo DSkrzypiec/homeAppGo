@@ -58,6 +58,7 @@ func main() {
 	http.HandleFunc("/documentFile", authHandlerMan.CheckAuth(documentsContr.PreviewDocument))
 	http.HandleFunc("/finance", authHandlerMan.CheckAuth(finContr.FinanceViewHandler))
 	http.HandleFunc("/finance-new", authHandlerMan.CheckAuth(finContr.FinanceInsertForm))
+	http.HandleFunc("/finance/upload", authHandlerMan.CheckAuth(finContr.FinanceUploadFile))
 	http.HandleFunc("/logout", authHandlerMan.TerminateSession)
 
 	log.Info().Msg("Listening on :8080...")

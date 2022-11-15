@@ -1,16 +1,24 @@
 package controller
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"homeApp/db"
+	"homeApp/finance"
 	"homeApp/front"
+	"io"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/rs/zerolog/log"
 )
 
-const contrFinPrefix = "controller/fin"
+const (
+	contrFinPrefix         = "controller/fin"
+	maxTranactinosFileSize = int64(50 * 1024 * 1024) // 50 MiB
+)
 
 type Finance struct {
 	DbClient *db.Client
@@ -27,6 +35,17 @@ type FinancialMonthlyAgg struct {
 	Outflow           string
 }
 
+type FinanceUpload struct {
+	Stats       *UploadStats
+	UploadError *string
+}
+
+type UploadStats struct {
+	NumOfTransactions int
+}
+
+// FinanceViewHandler gets financial summary and execute finance main view
+// template.
 func (f *Finance) FinanceViewHandler(w http.ResponseWriter, r *http.Request) {
 	monthlyAgg, err := f.getMonthlyAgg()
 	if err != nil {
@@ -44,6 +63,7 @@ func (f *Finance) FinanceViewHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// FinanceInsertForm renders financial insert form for new files.
 func (f *Finance) FinanceInsertForm(w http.ResponseWriter, r *http.Request) {
 	tmpl := front.FinanceNewForm()
 	execErr := tmpl.Execute(w, nil)
@@ -53,18 +73,62 @@ func (f *Finance) FinanceInsertForm(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// FinanceUploadFile handles uploading new files with financial transactions
+// into the database.
 func (f *Finance) FinanceUploadFile(w http.ResponseWriter, r *http.Request) {
-	// TODO
-	// Upload file, parse into transaction, upload into DB, send statistics
-	// into /finance-new
-	var stats string // TODO
-
+	startTs := time.Now()
+	log.Info().Msgf("[%s] start parsing new transactions form", contrFinPrefix)
 	tmpl := front.FinanceNewForm()
-	execErr := tmpl.Execute(w, stats)
-	if execErr != nil {
-		log.Error().Err(execErr).Msgf("[%s] cannot render finance insert form with stats", contrFinPrefix)
-		http.Redirect(w, r, "/finance", http.StatusSeeOther)
+
+	r.ParseMultipartForm(maxTranactinosFileSize)
+	parserType := r.FormValue("parser-type")
+	var buf bytes.Buffer
+	file, _, err := r.FormFile("pkoFile")
+	if err != nil {
+		log.Error().Err(err).Msgf("[%s] couldn't get file from the form", contrDocPrefix)
+		errDisplay := "Could not get file from the form, please retry"
+		tmpl.Execute(w, FinanceUpload{UploadError: &errDisplay})
+		return
 	}
+	defer file.Close()
+	io.Copy(&buf, file)
+
+	transParser, parserErr := parserTypeToParser(parserType)
+	if parserErr != nil {
+		log.Error().Err(parserErr).Msgf("[%s] parser selection failed", contrFinPrefix)
+		errDisplay := "Could not parse given file. Please check if file is in correct format."
+		tmpl.Execute(w, FinanceUpload{UploadError: &errDisplay})
+		return
+	}
+
+	transactions, tErr := transParser.Transactions(buf.Bytes())
+	if tErr != nil {
+		log.Error().Err(tErr).Msgf("[%s] couldn't parse file into list of transactions", contrFinPrefix)
+		errDisplay := "Could not parse given file. Please check if file is in correct format."
+		tmpl.Execute(w, FinanceUpload{UploadError: &errDisplay})
+		return
+	}
+
+	dbErr := f.DbClient.FinInsertTransactions(TransactionsToDbTransactions(transactions))
+	if dbErr != nil {
+		log.Error().Err(dbErr).Msgf("[%s] couldn't insert transactions into database", contrFinPrefix)
+		errDisplay := "Insertion into database failed, please contact administrator"
+		tmpl.Execute(w, FinanceUpload{UploadError: &errDisplay})
+		return
+	}
+
+	uploadStats := UploadStats{len(transactions)}
+	stats := FinanceUpload{Stats: &uploadStats}
+
+	log.Info().Dur("duration", time.Since(startTs)).Msgf("[%s] finished parsing new transactions form", contrFinPrefix)
+	tmpl.Execute(w, stats)
+}
+
+func parserTypeToParser(ptype string) (finance.TransactionParser, error) {
+	if ptype == "pkoxml" {
+		return finance.PkoBankXmlParser{}, nil
+	}
+	return nil, errors.New("unsupported parser")
 }
 
 func (f *Finance) getMonthlyAgg() ([]FinancialMonthlyAgg, error) {
@@ -107,4 +171,23 @@ func transAgg(date string, trans []db.BankTransaction) FinancialMonthlyAgg {
 		Inflow:            fmt.Sprintf("%.2f", inflow),
 		Outflow:           fmt.Sprintf("%.2f", outflow),
 	}
+}
+
+func TransactionsToDbTransactions(tt []finance.Transaction) []db.BankTransaction {
+	dbT := make([]db.BankTransaction, len(tt))
+
+	for i := 0; i < len(tt); i++ {
+		dbT[i] = db.BankTransaction{
+			AccountNumber:         tt[i].AccountNumber,
+			ExecutionDate:         tt[i].ExecutionDate,
+			OrderDate:             tt[i].OrderDate,
+			Type:                  tt[i].Type,
+			AmountCurrency:        tt[i].AmountCurrency,
+			AmountValue:           tt[i].AmountValue,
+			EndingBalanceCurrency: tt[i].EndingBalanceCurrency,
+			EndingBalanceValue:    tt[i].EndingBalanceValue,
+			Description:           tt[i].Description,
+		}
+	}
+	return dbT
 }

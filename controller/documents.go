@@ -78,7 +78,9 @@ func (d *Documents) InsertNewDocument(w http.ResponseWriter, r *http.Request) {
 	var buf bytes.Buffer
 	file, _, err := r.FormFile("docFile")
 	if err != nil {
-		panic(err)
+		log.Error().Err(err).Msgf("[%s] couldn't get file from the form", contrDocPrefix)
+		http.Redirect(w, r, "/documents", http.StatusSeeOther)
+		return
 	}
 	defer file.Close()
 	io.Copy(&buf, file)

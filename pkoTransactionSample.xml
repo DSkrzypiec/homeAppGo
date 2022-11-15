@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<account-history>
+<search>
+  <account>44102054560000150201686467</account>
+  <date since='2021-09-01' to='2021-09-30'/>
+  <filtering>Wszystkie</filtering>
+</search>
+<operations>
+  <operation>
+    <exec-date>2022-09-10</exec-date>
+    <order-date>2022-09-11</order-date>
+    <type>Payment</type>
+    <description>Description 1</description>
+    <amount curr='PLN'>-100.50</amount>
+    <ending-balance curr='PLN'>+10889.60</ending-balance>
+  </operation>
+  <operation>
+    <exec-date>2022-08-10</exec-date>
+    <order-date>2022-08-11</order-date>
+    <type>Payment</type>
+    <description>Description 2</description>
+    <amount curr='PLN'>-3410.90</amount>
+    <ending-balance curr='PLN'>+12109.60</ending-balance>
+  </operation>
+  <operation>
+    <exec-date>2022-02-10</exec-date>
+    <order-date>2022-02-11</order-date>
+    <type>Payment</type>
+    <description>Description 3</description>
+    <amount curr='PLN'>+5212.90</amount>
+    <ending-balance curr='PLN'>+8409.60</ending-balance>
+  </operation>
+  <operation>
+    <exec-date>2022-06-10</exec-date>
+    <order-date>2022-06-11</order-date>
+    <type>Payment</type>
+    <description>Description 4</description>
+    <amount curr='PLN'>-1120.90</amount>
+    <ending-balance curr='PLN'>+9909.60</ending-balance>
+  </operation>
+</operations>
+</account-history>
