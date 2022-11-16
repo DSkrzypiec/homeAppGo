@@ -10,6 +10,32 @@
 <body>
     {{ template "common-logo" }}
     {{ template "common-menu" }}
-    <h1>Home</h1>
+
+    <h2>Home database summary</h2>
+
+{{ if .LoadingError }}
+    <h2 style="color: red;">
+        Error: {{ .LoadingError }}
+    </h2>
+{{ else }}
+    <h3>Counters</h3>
+        <p>Average weekly usage based on latest three measurements</p>
+    <ul>
+        <li>Cold water: <b>{{.ColdWaterWeeklyAvg}}</b> liters </li>
+        <li>Hot water: <b>{{.HotWaterWeeklyAvg}}</b> liters </li>
+        <li>Energy: <b>{{.EnergyWeeklyAvg}}</b> kWh </li>
+    </ul>
+
+    <h3>Documents</h3>
+        <p>Documents statistics</p>
+    <ul>
+        <li>Number of documents uploaded: <b>{{.DocumentsNumber}}</b></li>
+        <li>Size of all documents: <b>{{.DocumentsSizeMb}}</b> MB</li>
+        <li>Latest document upload date: <b>{{.DocumentLatestUploadDate}}</b></li>
+    </ul>
+
+    <h3>Finance</h3>
+        <p>Latest uploaded transaction was from <b>{{.FinancialLatestOrderDate}}.</b></p>
+{{ end }}
 </body>
 </html>

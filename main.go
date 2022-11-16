@@ -42,14 +42,15 @@ func main() {
 		TelegramClient: telegramClient,
 	}
 	authHandlerMan := auth.HandlerManager{UserAuthenticator: userAuth}
-	loginContr := controller.LoginForm{AuthManager: authHandlerMan}
+	loginContr := controller.LoginForm{AuthManager: authHandlerMan, DbClient: dbClient}
+	homeContr := controller.Home{DbClient: dbClient}
 	counterContr := controller.Counters{DbClient: dbClient}
 	documentsContr := controller.Documents{DbClient: dbClient}
 	finContr := controller.Finance{DbClient: dbClient}
 
 	http.HandleFunc("/", loginContr.LoginFormHandler)
 	http.HandleFunc("/login", authHandlerMan.Login)
-	http.HandleFunc("/home", authHandlerMan.CheckAuth(controller.Home))
+	http.HandleFunc("/home", authHandlerMan.CheckAuth(homeContr.HomeSummaryView))
 	http.HandleFunc("/counters", authHandlerMan.CheckAuth(counterContr.CountersViewHandler))
 	http.HandleFunc("/counters-new", authHandlerMan.CheckAuth(counterContr.CountersInsertForm))
 	http.HandleFunc("/counters/upload", authHandlerMan.CheckAuth(counterContr.CountersUploadNew))

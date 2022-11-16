@@ -2,6 +2,7 @@ package controller
 
 import (
 	"homeApp/auth"
+	"homeApp/db"
 	"homeApp/front"
 	"net/http"
 
@@ -11,6 +12,7 @@ import (
 const loginFormPrefix = "controller/loginForm"
 
 type LoginForm struct {
+	DbClient    *db.Client
 	AuthManager auth.HandlerManager
 }
 
@@ -23,6 +25,6 @@ func (lf *LoginForm) LoginFormHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl := front.Home()
-	tmpl.Execute(w, nil)
+	homeController := Home{DbClient: lf.DbClient}
+	homeController.HomeSummaryView(w, r)
 }
