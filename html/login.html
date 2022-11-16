@@ -13,5 +13,9 @@
             <input type="password" name="pass" id="aligned-password" placeholder="Password" />
             <button type="submit" class="pure-button pure-button-primary">Submit</button>
         </form>
+
+    {{ if .TelegramClient }}
+        <p>Please remember about 2FA via Telegram</p>
+    {{ end }}
 </body>
 </html>

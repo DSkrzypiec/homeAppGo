@@ -42,7 +42,7 @@ func main() {
 		TelegramClient: telegramClient,
 	}
 	authHandlerMan := auth.HandlerManager{UserAuthenticator: userAuth}
-	loginContr := controller.LoginForm{AuthManager: authHandlerMan, DbClient: dbClient}
+	loginContr := controller.LoginForm{TelegramClient: telegramClient, AuthManager: authHandlerMan, DbClient: dbClient}
 	homeContr := controller.Home{DbClient: dbClient}
 	counterContr := controller.Counters{DbClient: dbClient}
 	documentsContr := controller.Documents{DbClient: dbClient}

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"homeApp/auth"
+	"homeApp/auth/telegram"
 	"homeApp/db"
 	"homeApp/front"
 	"net/http"
@@ -12,8 +13,9 @@ import (
 const loginFormPrefix = "controller/loginForm"
 
 type LoginForm struct {
-	DbClient    *db.Client
-	AuthManager auth.HandlerManager
+	TelegramClient *telegram.Client
+	DbClient       *db.Client
+	AuthManager    auth.HandlerManager
 }
 
 func (lf *LoginForm) LoginFormHandler(w http.ResponseWriter, r *http.Request) {
@@ -21,7 +23,7 @@ func (lf *LoginForm) LoginFormHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil || !sessionCookieValid {
 		log.Info().Msgf("[%s] no session cookie or invalid, rendering login form", loginFormPrefix)
 		tmpl := front.Login()
-		tmpl.Execute(w, nil)
+		tmpl.Execute(w, lf)
 		return
 	}
 
