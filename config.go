@@ -1,8 +1,10 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -10,14 +12,25 @@ import (
 )
 
 const (
-	TelegramBotTokenEnv  = "HOMEAPP_TELEGRAM_BOT_TOKEN"
-	TelegramChannelIdEnv = "HOMEAPP_TELEGRAM_CHANNEL_ID"
+	SessionTimeoutMinutes = 10
+	TelegramBotTokenEnv   = "HOMEAPP_TELEGRAM_BOT_TOKEN"
+	TelegramChannelIdEnv  = "HOMEAPP_TELEGRAM_CHANNEL_ID"
 )
 
+//go:generate sh -c "head -1 CHANGELOG.md > VERSION.txt"
+//go:generate sh -c "printf %s $(git rev-parse HEAD) >> VERSION.txt"
+//go:embed VERSION.txt
+var versionFile string
+
 type Config struct {
-	DatabasePath   string
-	UseTelegram2FA bool
-	Telegram       *TelegramConfig
+	Port                  int
+	DatabasePath          string
+	UseTelegram2FA        bool
+	Telegram              *TelegramConfig
+	SessionTimeoutMinutes int
+	HttpClientTimeout     time.Duration
+	AppVersion            string
+	CurrentCommitSHA      string
 }
 
 type TelegramConfig struct {
@@ -29,6 +42,7 @@ type TelegramConfig struct {
 func ParseConfigFlags() Config {
 	telegram2fa := flag.Bool("telegram2fa", false, "Use Telegram for two-factor authentication")
 	dbPath := flag.String("dbPath", "test.db", "Path to SQLite Home DB")
+	port := flag.Int("port", 8080, "Port on which HomeApp is listening")
 	flag.Parse()
 
 	var telegramConfig *TelegramConfig
@@ -48,11 +62,41 @@ func ParseConfigFlags() Config {
 		}
 	}
 
+	appVersion, commitSha := parseVersions(versionFile)
+
 	return Config{
+		Port:           *port,
 		DatabasePath:   *dbPath,
 		UseTelegram2FA: *telegram2fa,
 		Telegram:       telegramConfig,
+
+		SessionTimeoutMinutes: SessionTimeoutMinutes,
+		HttpClientTimeout:     60 * time.Second,
+
+		AppVersion:       appVersion,
+		CurrentCommitSHA: commitSha,
 	}
+}
+
+func parseVersions(input string) (string, string) {
+	const firstSHAChars = 8
+
+	lines := strings.Split(input, "\n")
+	if len(lines) != 2 {
+		log.Fatal().Msg("[config] VERSION.txt file should contain exactly 2 lines - app version and commit SHA")
+	}
+	_, appVersion, appVerOk := strings.Cut(lines[0], " ")
+	if !appVerOk {
+		log.Fatal().Msgf("[config] incorrect app version. Should be taken from CHANGELOG in form of '# v0.1.0', got: %s",
+			lines[0])
+	}
+	commitSha := lines[1]
+	if len(commitSha) <= firstSHAChars {
+		log.Fatal().Msgf("[config] incorrect commit SHA length, got: %d", len(commitSha))
+	}
+	shortSha := lines[1][:firstSHAChars] + "..."
+
+	return appVersion, shortSha
 }
 
 func setupZerolog() {

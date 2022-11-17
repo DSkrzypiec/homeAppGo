@@ -12,7 +12,9 @@ import (
 const contrHomePrefix = "controller/home"
 
 type Home struct {
-	DbClient *db.Client
+	DbClient    *db.Client
+	AppVersion  string
+	CurrentHash string
 }
 
 type HomeSummary struct {
@@ -24,6 +26,9 @@ type HomeSummary struct {
 	DocumentsSizeMb          string // float64 rounded to 2 decimal places
 	DocumentLatestUploadDate string
 	FinancialLatestOrderDate string
+
+	AppVersion  string
+	CurrentHash string
 }
 
 func (h *Home) HomeSummaryView(w http.ResponseWriter, _ *http.Request) {
@@ -44,6 +49,9 @@ func (h *Home) HomeSummaryView(w http.ResponseWriter, _ *http.Request) {
 		DocumentsSizeMb:          fmt.Sprintf("%.2f", dbSummary.DocumentsSizeMb),
 		DocumentLatestUploadDate: dbSummary.DocumentLatestUploadDate,
 		FinancialLatestOrderDate: dbSummary.FinancialLatestOrderDate,
+
+		AppVersion:  h.AppVersion,
+		CurrentHash: h.CurrentHash,
 	}
 	tmpl.Execute(w, summary)
 }

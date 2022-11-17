@@ -16,6 +16,8 @@ type LoginForm struct {
 	TelegramClient *telegram.Client
 	DbClient       *db.Client
 	AuthManager    auth.HandlerManager
+	AppVersion     string
+	CurrentHash    string
 }
 
 func (lf *LoginForm) LoginFormHandler(w http.ResponseWriter, r *http.Request) {
@@ -27,6 +29,6 @@ func (lf *LoginForm) LoginFormHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	homeController := Home{DbClient: lf.DbClient}
+	homeController := Home{DbClient: lf.DbClient, AppVersion: lf.AppVersion, CurrentHash: lf.CurrentHash}
 	homeController.HomeSummaryView(w, r)
 }

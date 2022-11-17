@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"homeApp/auth"
 	"homeApp/auth/telegram"
@@ -29,7 +28,7 @@ func main() {
 	}
 
 	// Long-lived
-	httpClient := http.Client{Timeout: 60 * time.Second}
+	httpClient := http.Client{Timeout: config.HttpClientTimeout}
 	var telegramClient *telegram.Client = nil
 	if config.UseTelegram2FA {
 		telegramClient = telegram.NewClient(&httpClient, config.Telegram.BotToken, config.Telegram.ChannelId)
@@ -38,15 +37,21 @@ func main() {
 	userAuth := auth.UserAuth{
 		DbClient:       dbClient,
 		JwtSigningKey:  []byte("crap"), // TODO randomly generate key on each program start
-		JwtExpMinutes:  10,             // TODO
+		JwtExpMinutes:  config.SessionTimeoutMinutes,
 		TelegramClient: telegramClient,
 	}
 	authHandlerMan := auth.HandlerManager{UserAuthenticator: userAuth}
-	loginContr := controller.LoginForm{TelegramClient: telegramClient, AuthManager: authHandlerMan, DbClient: dbClient}
-	homeContr := controller.Home{DbClient: dbClient}
+	homeContr := controller.Home{DbClient: dbClient, AppVersion: config.AppVersion, CurrentHash: config.CurrentCommitSHA}
 	counterContr := controller.Counters{DbClient: dbClient}
 	documentsContr := controller.Documents{DbClient: dbClient}
 	finContr := controller.Finance{DbClient: dbClient}
+	loginContr := controller.LoginForm{
+		TelegramClient: telegramClient,
+		AuthManager:    authHandlerMan,
+		DbClient:       dbClient,
+		AppVersion:     config.AppVersion,
+		CurrentHash:    config.CurrentCommitSHA,
+	}
 
 	http.HandleFunc("/", loginContr.LoginFormHandler)
 	http.HandleFunc("/login", authHandlerMan.Login)
@@ -63,6 +68,6 @@ func main() {
 	http.HandleFunc("/finance/upload", authHandlerMan.CheckAuth(finContr.FinanceUploadFile))
 	http.HandleFunc("/logout", authHandlerMan.TerminateSession)
 
-	log.Info().Msg("Listening on :8080...")
-	http.ListenAndServe(":8080", nil)
+	log.Info().Msgf("Listening on :%d...", config.Port)
+	http.ListenAndServe(fmt.Sprintf(":%d", config.Port), nil)
 }
