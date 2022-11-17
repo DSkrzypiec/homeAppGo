@@ -57,6 +57,43 @@ func (c *Client) UserByUsername(username string) (User, error) {
 	return user, nil
 }
 
+// UserByUserId gets user data if given userId exists.
+func (c *Client) UserByUserId(userId int) (User, error) {
+	log.Info().Int("userId", userId).Msgf("[%s] reading user info from db", dbAuthPerfix)
+	startTs := time.Now()
+
+	var isActive int
+	var username, email, password, salt, createDate string
+	row := c.dbConn.QueryRow(userIdQuery(), userId)
+	scanErr := row.Scan(&username, &email, &password, &salt, &isActive, &createDate)
+
+	switch scanErr {
+	case sql.ErrNoRows:
+		log.Error().Err(scanErr).Int("userId", userId).
+			Msgf("[%s] cannot get user because user does not exist", dbAuthPerfix)
+		return User{}, scanErr
+	case nil:
+		break
+	default:
+		log.Error().Err(scanErr).Int("userId", userId).Msgf("[%s] cannot get user info", dbAuthPerfix)
+		return User{}, scanErr
+	}
+
+	user := User{
+		UserId:         userId,
+		Email:          email,
+		Username:       username,
+		PasswordHashed: password,
+		Salt:           salt,
+		IsActive:       isActive == 1,
+		CreateDate:     createDate,
+	}
+	elapsed := time.Since(startTs)
+	log.Info().Int("userId", userId).Dur("duration", elapsed).Msgf("[%s] finished reading user info", dbAuthPerfix)
+
+	return user, nil
+}
+
 func userQuery() string {
 	return `
 		SELECT
@@ -70,6 +107,23 @@ func userQuery() string {
 			users
 		WHERE
 			Username = ?
+		;
+	`
+}
+
+func userIdQuery() string {
+	return `
+		SELECT
+			Username,
+			Email,
+			PasswordHashed,
+			Salt,
+			IsActive,
+			CreateDate
+		FROM
+			users
+		WHERE
+			UserId = ?
 		;
 	`
 }

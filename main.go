@@ -41,10 +41,26 @@ func main() {
 		TelegramClient: telegramClient,
 	}
 	authHandlerMan := auth.HandlerManager{UserAuthenticator: userAuth}
-	homeContr := controller.Home{DbClient: dbClient, AppVersion: config.AppVersion, CurrentHash: config.CurrentCommitSHA}
-	counterContr := controller.Counters{DbClient: dbClient}
-	documentsContr := controller.Documents{DbClient: dbClient}
-	finContr := controller.Finance{DbClient: dbClient}
+	homeContr := controller.Home{
+		DbClient:    dbClient,
+		AppVersion:  config.AppVersion,
+		CurrentHash: config.CurrentCommitSHA,
+	}
+	counterContr := controller.Counters{
+		DbClient:       dbClient,
+		TelegramClient: telegramClient,
+		UserAuth:       userAuth,
+	}
+	documentsContr := controller.Documents{
+		DbClient:       dbClient,
+		TelegramClient: telegramClient,
+		UserAuth:       userAuth,
+	}
+	finContr := controller.Finance{
+		DbClient:       dbClient,
+		TelegramClient: telegramClient,
+		UserAuth:       userAuth,
+	}
 	loginContr := controller.LoginForm{
 		TelegramClient: telegramClient,
 		AuthManager:    authHandlerMan,

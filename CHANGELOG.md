@@ -1,3 +1,7 @@
+# v0.1.2
+    * If 2FA is enabled, Telegram messages will be sent after insertions into
+      database (counters state, financial transactions and documents)
+
 # v0.1.1
     * Extend configuration (port)
     * Embed application version and git commit SHA into footer on /home

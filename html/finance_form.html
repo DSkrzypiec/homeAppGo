@@ -30,7 +30,8 @@
 
     {{ if .Stats }}
         <p>
-            Uploaded {{ .Stats.NumOfTransactions }} transactions.
+            Uploaded {{ .Stats.NumOfTransactions }} transactions from {{
+            .Stats.MinExecutionDate }} to {{ .Stats.MaxExecutionDate }}.
         </p>
     {{ end }}
 

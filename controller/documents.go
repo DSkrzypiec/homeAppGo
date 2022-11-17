@@ -2,12 +2,15 @@ package controller
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
+	"homeApp/auth"
+	"homeApp/auth/telegram"
 	"homeApp/db"
 	"homeApp/front"
 
@@ -20,7 +23,9 @@ const (
 )
 
 type Documents struct {
-	DbClient *db.Client
+	DbClient       *db.Client
+	TelegramClient *telegram.Client
+	UserAuth       auth.UserAuthenticator
 }
 
 type DocumentsList struct {
@@ -105,6 +110,13 @@ func (d *Documents) InsertNewDocument(w http.ResponseWriter, r *http.Request) {
 		log.Error().Err(dErr).Msgf("[%s] uploading new document failed", contrDocPrefix)
 		http.Redirect(w, r, "/documents", http.StatusSeeOther)
 		return
+	}
+
+	msg := fmt.Sprintf("Uploaded new document [%s][%s] of size %.2f MB", docName, docExt,
+		float64(buf.Len())/1000000.0)
+	teleErr := SendTelegramMsgForUser(r, d.UserAuth, d.TelegramClient, d.DbClient, msg)
+	if teleErr != nil {
+		log.Error().Err(teleErr).Msgf("[%s] sending message to Telegram failed", contrFinPrefix)
 	}
 
 	log.Info().Dur("duration", time.Since(startTs)).

@@ -1,10 +1,13 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
+	"homeApp/auth"
+	"homeApp/auth/telegram"
 	"homeApp/db"
 	"homeApp/front"
 
@@ -14,7 +17,9 @@ import (
 const contrCountPrefix = "controller/counter"
 
 type Counters struct {
-	DbClient *db.Client
+	DbClient       *db.Client
+	TelegramClient *telegram.Client
+	UserAuth       auth.UserAuthenticator
 }
 
 type CountersTemplateInput struct {
@@ -97,6 +102,13 @@ func (c *Counters) CountersUploadNew(w http.ResponseWriter, r *http.Request) {
 		displayError := "could not insert counters data into database"
 		tmpl.Execute(w, CountersUpload{UploadError: &displayError})
 		return
+	}
+
+	msg := fmt.Sprintf("Uploaded new counters state for [%s]: Water{Cold: %d liters, Hot: %d liters}"+
+		", Energy %.2f kWh.", date, int(coldWater), int(hotWater), ene)
+	teleErr := SendTelegramMsgForUser(r, c.UserAuth, c.TelegramClient, c.DbClient, msg)
+	if teleErr != nil {
+		log.Error().Err(teleErr).Msgf("[%s] sending message to Telegram failed", contrFinPrefix)
 	}
 
 	log.Info().Dur("duration", time.Since(startTs)).Msgf("[%s] finished inserting counters data",

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"homeApp/auth"
+	"homeApp/auth/telegram"
 	"homeApp/db"
 	"homeApp/finance"
 	"homeApp/front"
@@ -21,7 +23,9 @@ const (
 )
 
 type Finance struct {
-	DbClient *db.Client
+	DbClient       *db.Client
+	TelegramClient *telegram.Client
+	UserAuth       auth.UserAuthenticator
 }
 
 type FinanceData struct {
@@ -42,6 +46,8 @@ type FinanceUpload struct {
 
 type UploadStats struct {
 	NumOfTransactions int
+	MinExecutionDate  string
+	MaxExecutionDate  string
 }
 
 // FinanceViewHandler gets financial summary and execute finance main view
@@ -117,8 +123,15 @@ func (f *Finance) FinanceUploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uploadStats := UploadStats{len(transactions)}
+	uploadStats := prepUploadStats(transactions)
 	stats := FinanceUpload{Stats: &uploadStats}
+
+	msg := fmt.Sprintf("Uploaded %d financial transactions from %s to %s.",
+		uploadStats.NumOfTransactions, uploadStats.MinExecutionDate, uploadStats.MaxExecutionDate)
+	teleErr := SendTelegramMsgForUser(r, f.UserAuth, f.TelegramClient, f.DbClient, msg)
+	if teleErr != nil {
+		log.Error().Err(teleErr).Msgf("[%s] sending message to Telegram failed", contrFinPrefix)
+	}
 
 	log.Info().Dur("duration", time.Since(startTs)).Msgf("[%s] finished parsing new transactions form", contrFinPrefix)
 	tmpl.Execute(w, stats)
@@ -129,6 +142,26 @@ func parserTypeToParser(ptype string) (finance.TransactionParser, error) {
 		return finance.PkoBankXmlParser{}, nil
 	}
 	return nil, errors.New("unsupported parser")
+}
+
+func prepUploadStats(newTransactions []finance.Transaction) UploadStats {
+	minExecDate := "2900-01-01"
+	maxExecDate := "1900-01-01"
+
+	for _, t := range newTransactions {
+		if t.ExecutionDate < minExecDate {
+			minExecDate = t.ExecutionDate
+		}
+		if t.ExecutionDate > maxExecDate {
+			maxExecDate = t.ExecutionDate
+		}
+	}
+
+	return UploadStats{
+		NumOfTransactions: len(newTransactions),
+		MinExecutionDate:  minExecDate,
+		MaxExecutionDate:  maxExecDate,
+	}
 }
 
 func (f *Finance) getMonthlyAgg() ([]FinancialMonthlyAgg, error) {
