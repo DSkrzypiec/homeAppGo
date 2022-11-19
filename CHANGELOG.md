@@ -1,3 +1,7 @@
+# v0.1.3
+    * Add basic monitoring regarding page view counts. If Telegram 2FA is
+      enabled monitoring messages would be send onto Telegram channel.
+
 # v0.1.2
     * If 2FA is enabled, Telegram messages will be sent after insertions into
       database (counters state, financial transactions and documents)

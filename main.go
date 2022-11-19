@@ -8,6 +8,7 @@ import (
 	"homeApp/auth/telegram"
 	"homeApp/controller"
 	"homeApp/db"
+	"homeApp/monitor"
 
 	"github.com/rs/zerolog/log"
 
@@ -30,9 +31,14 @@ func main() {
 	// Long-lived
 	httpClient := http.Client{Timeout: config.HttpClientTimeout}
 	var telegramClient *telegram.Client = nil
+	var monitoringMsgSender monitor.MessageSender = monitor.MockMessageSender{}
 	if config.UseTelegram2FA {
 		telegramClient = telegram.NewClient(&httpClient, config.Telegram.BotToken, config.Telegram.ChannelId)
+		monitoringMsgSender = telegramClient
 	}
+
+	pageViews := monitor.NewPageViews(config.UseTelegram2FA)
+	go pageViews.PublishViews(config.PublishViewsAfter, monitoringMsgSender)
 
 	userAuth := auth.UserAuth{
 		DbClient:       dbClient,
@@ -69,20 +75,20 @@ func main() {
 		CurrentHash:    config.CurrentCommitSHA,
 	}
 
-	http.HandleFunc("/", loginContr.LoginFormHandler)
-	http.HandleFunc("/login", authHandlerMan.Login)
-	http.HandleFunc("/home", authHandlerMan.CheckAuth(homeContr.HomeSummaryView))
-	http.HandleFunc("/counters", authHandlerMan.CheckAuth(counterContr.CountersViewHandler))
-	http.HandleFunc("/counters-new", authHandlerMan.CheckAuth(counterContr.CountersInsertForm))
-	http.HandleFunc("/counters/upload", authHandlerMan.CheckAuth(counterContr.CountersUploadNew))
-	http.HandleFunc("/documents", authHandlerMan.CheckAuth(documentsContr.DocumentsViewHandler))
-	http.HandleFunc("/documents-new", authHandlerMan.CheckAuth(documentsContr.DocumentsInsertForm))
-	http.HandleFunc("/documents/uploadFile", authHandlerMan.CheckAuth(documentsContr.InsertNewDocument))
-	http.HandleFunc("/documentFile", authHandlerMan.CheckAuth(documentsContr.PreviewDocument))
-	http.HandleFunc("/finance", authHandlerMan.CheckAuth(finContr.FinanceViewHandler))
-	http.HandleFunc("/finance-new", authHandlerMan.CheckAuth(finContr.FinanceInsertForm))
-	http.HandleFunc("/finance/upload", authHandlerMan.CheckAuth(finContr.FinanceUploadFile))
-	http.HandleFunc("/logout", authHandlerMan.TerminateSession)
+	http.HandleFunc("/", pageViews.Listen(loginContr.LoginFormHandler))
+	http.HandleFunc("/login", pageViews.Listen(authHandlerMan.Login))
+	http.HandleFunc("/home", pageViews.Listen(authHandlerMan.CheckAuth(homeContr.HomeSummaryView)))
+	http.HandleFunc("/counters", pageViews.Listen(authHandlerMan.CheckAuth(counterContr.CountersViewHandler)))
+	http.HandleFunc("/counters-new", pageViews.Listen(authHandlerMan.CheckAuth(counterContr.CountersInsertForm)))
+	http.HandleFunc("/counters/upload", pageViews.Listen(authHandlerMan.CheckAuth(counterContr.CountersUploadNew)))
+	http.HandleFunc("/documents", pageViews.Listen(authHandlerMan.CheckAuth(documentsContr.DocumentsViewHandler)))
+	http.HandleFunc("/documents-new", pageViews.Listen(authHandlerMan.CheckAuth(documentsContr.DocumentsInsertForm)))
+	http.HandleFunc("/documents/uploadFile", pageViews.Listen(authHandlerMan.CheckAuth(documentsContr.InsertNewDocument)))
+	http.HandleFunc("/documentFile", pageViews.Listen(authHandlerMan.CheckAuth(documentsContr.PreviewDocument)))
+	http.HandleFunc("/finance", pageViews.Listen(authHandlerMan.CheckAuth(finContr.FinanceViewHandler)))
+	http.HandleFunc("/finance-new", pageViews.Listen(authHandlerMan.CheckAuth(finContr.FinanceInsertForm)))
+	http.HandleFunc("/finance/upload", pageViews.Listen(authHandlerMan.CheckAuth(finContr.FinanceUploadFile)))
+	http.HandleFunc("/logout", pageViews.Listen(authHandlerMan.TerminateSession))
 
 	log.Info().Msgf("Listening on :%d...", config.Port)
 	http.ListenAndServe(fmt.Sprintf(":%d", config.Port), nil)

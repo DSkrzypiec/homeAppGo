@@ -31,6 +31,7 @@ type Config struct {
 	HttpClientTimeout     time.Duration
 	AppVersion            string
 	CurrentCommitSHA      string
+	PublishViewsAfter     time.Duration
 }
 
 type TelegramConfig struct {
@@ -72,6 +73,8 @@ func ParseConfigFlags() Config {
 
 		SessionTimeoutMinutes: SessionTimeoutMinutes,
 		HttpClientTimeout:     60 * time.Second,
+
+		PublishViewsAfter: 1 * time.Hour,
 
 		AppVersion:       appVersion,
 		CurrentCommitSHA: commitSha,
