@@ -9,6 +9,7 @@ import (
 	"homeApp/controller"
 	"homeApp/db"
 	"homeApp/monitor"
+	"homeApp/rand"
 
 	"github.com/rs/zerolog/log"
 
@@ -16,7 +17,8 @@ import (
 )
 
 const (
-	SessCookieName = "session"
+	SessCookieName   = "session"
+	JwtSigningKeyLen = 256
 )
 
 func main() {
@@ -43,7 +45,7 @@ func main() {
 
 	userAuth := auth.UserAuth{
 		DbClient:       dbClient,
-		JwtSigningKey:  []byte("crap"), // TODO randomly generate key on each program start
+		JwtSigningKey:  []byte(rand.AlphanumStr(JwtSigningKeyLen)),
 		JwtExpMinutes:  config.SessionTimeoutMinutes,
 		TelegramClient: telegramClient,
 	}

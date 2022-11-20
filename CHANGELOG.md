@@ -1,3 +1,9 @@
+# v0.1.4
+    * Update monitoring page view counts by putting unregistered endpoint paths
+      into single category, to make published statistics more readable (there
+      are a lots of bots and crawlers out there!)
+    * JWT signing key is now randomly generated
+
 # v0.1.3
     * Add basic monitoring regarding page view counts. If Telegram 2FA is
       enabled monitoring messages would be send onto Telegram channel.
