@@ -31,18 +31,23 @@ func (mms MockMessageSender) SendMessage(msg string) error {
 	return nil
 }
 
-// PageViews keeps map with endpoints paths and visit counts.
+// PageViews keeps map with endpoints paths and visit counts. A set of
+// registered endpoint paths are needed to group other requests (like
+// /robot.txt or /aws/credential) sent by bots and crawlers into single
+// category.
 type PageViews struct {
 	sync.Mutex
-	urlCounts          map[string]int64
-	escapeMessageToUrl bool
+	urlCounts           map[string]int64
+	registeredEndpoints map[string]struct{}
+	escapeMessageToUrl  bool
 }
 
 // NewPageViews creates new PageViews.
-func NewPageViews(escapeMessageToUrl bool) *PageViews {
+func NewPageViews(escapeMessageToUrl bool, registeredEndpoints map[string]struct{}) *PageViews {
 	return &PageViews{
-		urlCounts:          map[string]int64{},
-		escapeMessageToUrl: escapeMessageToUrl,
+		urlCounts:           map[string]int64{},
+		registeredEndpoints: registeredEndpoints,
+		escapeMessageToUrl:  escapeMessageToUrl,
 	}
 }
 
@@ -115,9 +120,14 @@ func publishMessage(msg string, messenger MessageSender) {
 }
 
 func (pv *PageViews) addView(url string) {
+	const noRegisteredKey = "/_notRegistered"
 	pv.Lock()
 	if len(url) > 0 {
-		pv.urlCounts[url] = pv.urlCounts[url] + 1
+		if pv.isEndpointMatched(url) {
+			pv.urlCounts[url] = pv.urlCounts[url] + 1
+		} else {
+			pv.urlCounts[noRegisteredKey] = pv.urlCounts[noRegisteredKey] + 1
+		}
 	}
 	pv.Unlock()
 }
@@ -141,4 +151,18 @@ func (pv *PageViews) toString() string {
 	pv.Unlock()
 
 	return b.String()
+}
+
+// If endpoint /documentFile is registered, then endpoint /documentFile?id=10
+// should be matched as registgered endpoint.
+func (pv *PageViews) isEndpointMatched(path string) bool {
+	for endpoint := range pv.registeredEndpoints {
+		if path == "/" {
+			return true
+		}
+		if len(endpoint) > 2 && strings.HasPrefix(path, endpoint) {
+			return true
+		}
+	}
+	return false
 }

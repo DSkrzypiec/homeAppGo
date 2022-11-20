@@ -44,6 +44,9 @@ func ParseConfigFlags() Config {
 	telegram2fa := flag.Bool("telegram2fa", false, "Use Telegram for two-factor authentication")
 	dbPath := flag.String("dbPath", "test.db", "Path to SQLite Home DB")
 	port := flag.Int("port", 8080, "Port on which HomeApp is listening")
+	publishViewsAfter := flag.Int("publishViewsAfter", 300,
+		"After each 'x' minutes endpoints views statistics will be published")
+
 	flag.Parse()
 
 	var telegramConfig *TelegramConfig
@@ -74,7 +77,7 @@ func ParseConfigFlags() Config {
 		SessionTimeoutMinutes: SessionTimeoutMinutes,
 		HttpClientTimeout:     60 * time.Second,
 
-		PublishViewsAfter: 1 * time.Hour,
+		PublishViewsAfter: time.Duration(*publishViewsAfter) * time.Minute,
 
 		AppVersion:       appVersion,
 		CurrentCommitSHA: commitSha,
