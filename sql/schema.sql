@@ -87,3 +87,33 @@ FROM
 ORDER BY
     DocumentId
 ;
+
+CREATE TABLE IF NOT EXISTS books (
+    BookId INT NOT NULL,
+    Title TEXT NOT NULL,
+    Authors TEXT NOT NULL,
+    Publisher TEXT NULL,
+    PublishingYear INT NULL,
+    FileExtension TEXT NULL,
+    FileSize INT NULL,
+    UploadDate TEXT NULL,
+
+    PRIMARY KEY (BookId),
+    UNIQUE(Title, Authors, Publisher, PublishingYear)
+);
+
+CREATE TABLE IF NOT EXISTS bookFiles (
+    BookId INT NOT NULL,
+    FileBytes BLOB NOT NULL
+);
+
+-- For full text search on books
+CREATE VIRTUAL TABLE IF NOT EXISTS booksFts5 USING fts5(
+    BookId,
+    Title,
+    Authors,
+    Publisher,
+    PublishingYear,
+    FileExtension,
+    UploadDate
+);

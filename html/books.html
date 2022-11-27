@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {{ template "common-header" }}
+    <style>
+        {{ template "common-css" }}
+    </style>
+</head>
+
+<body>
+    {{ template "common-logo" }}
+    {{ template "common-menu" }}
+
+    <a href="/books-new">Insert new book</a>
+
+    <h2>Books</h2>
+
+    <form action="/books" method="post">
+        <input type="text" name="bookFilter" minLength="2" required>
+        <input type="submit" value="Filter" />
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Author(s)</th>
+                <th>Category</th>
+            </tr>
+        </thead>
+        <tbody>
+        {{ range .Books }}
+        {{ end}}
+        </tbody>
+    </table>
+</body>
+</html>
