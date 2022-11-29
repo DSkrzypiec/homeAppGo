@@ -44,13 +44,28 @@ type BookList struct {
 }
 
 func (b *Books) BooksViewHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	filterPhrase := r.FormValue("bookFilter")
 	tmpl := front.Books()
 
-	books, bErr := b.DbClient.Books()
-	if bErr != nil {
-		log.Error().Err(bErr).Msgf("[%s] cannot load books from database", contrBookPrefix)
-		http.Redirect(w, r, "/home", http.StatusSeeOther)
-		return
+	var books []db.Book
+	var bErr error
+
+	if filterPhrase == "" {
+		books, bErr = b.DbClient.Books()
+		if bErr != nil {
+			log.Error().Err(bErr).Msgf("[%s] cannot load books from database", contrBookPrefix)
+			http.Redirect(w, r, "/home", http.StatusSeeOther)
+			return
+		}
+	} else {
+		log.Info().Str("filter", filterPhrase).Msgf("[%s] loading books in filtered version", contrBookPrefix)
+		books, bErr = b.DbClient.BooksFiltered(filterPhrase)
+		if bErr != nil {
+			log.Error().Err(bErr).Msgf("[%s] cannot load filtered books from database", contrBookPrefix)
+			http.Redirect(w, r, "/home", http.StatusSeeOther)
+			return
+		}
 	}
 
 	execErr := tmpl.Execute(w, BookList{Books: booksToDisplay(books)})

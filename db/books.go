@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -71,10 +72,45 @@ func (c *Client) Books() ([]Book, error) {
 	return books, nil
 }
 
-// TODO
+// Books reads list of filtered metadata of documents (without content itself)
+// by given phrase.
 func (c *Client) BooksFiltered(phrase string) ([]Book, error) {
-	// TODO
-	return []Book{}, nil
+	startTs := time.Now()
+	books := make([]Book, 0, 500)
+	log.Info().Str("filter", phrase).Msgf("[%s] start reading filtered books metadata", dbBooksPrefix)
+
+	queryPhrase := fmt.Sprintf(`"%s"*`, phrase)
+	rows, qErr := c.dbConn.Query(booksFilteredQuery(), queryPhrase)
+	if qErr != nil {
+		log.Error().Err(qErr).Str("filter", phrase).Msgf("[%s] booksQuery failed", dbBooksPrefix)
+		return books, qErr
+	}
+
+	var id int
+	var publishingYear, fileSize *int
+	var title, authors, uploadDate string
+	var publisher, fileExt *string
+	for rows.Next() {
+		sErr := rows.Scan(&id, &title, &authors, &publisher, &publishingYear, &fileExt, &fileSize, &uploadDate)
+		if sErr != nil {
+			log.Warn().Err(sErr).Msgf("[%s] while scanning results of booksQuery", dbBooksPrefix)
+			continue
+		}
+		books = append(books, Book{
+			Id:             id,
+			Title:          title,
+			Authors:        authors,
+			Publisher:      publisher,
+			PublishingYear: publishingYear,
+			FileExtension:  fileExt,
+			FileSize:       fileSize,
+			UploadDate:     uploadDate,
+		})
+	}
+	log.Info().Int("rowsLoaded", len(books)).Dur("duration", time.Since(startTs)).
+		Msgf("[%s] finished reading books info", dbBooksPrefix)
+
+	return books, nil
 }
 
 // BookInsertNew uploads into database information about new book. This
@@ -236,22 +272,22 @@ func booksQuery() string {
 func booksFilteredQuery() string {
 	return `
 		SELECT
-			BookId,
-			Title,
-			Authors,
-			Publisher,
-			PublishingYear,
-			FileExtension,
-			FileSize,
-			UploadDate
+			b.BookId,
+			b.Title,
+			b.Authors,
+			b.Publisher,
+			b.PublishingYear,
+			b.FileExtension,
+			b.FileSize,
+			b.UploadDate
 		FROM
 			booksFts5 f
 		INNER JOIN
-			books d ON f.BookId = d.BookId
+			books b ON f.BookId = b.BookId
 		WHERE
 			f.booksFts5 MATCH ?
 		ORDER BY
-			d.BookId DESC
+			b.BookId DESC
 	`
 }
 
