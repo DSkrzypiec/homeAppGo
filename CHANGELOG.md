@@ -1,3 +1,10 @@
+# v0.2.0
+    * Add (e)books page
+    * Books (just info about a book) or e-book (info + e-book file) can be
+      added
+    * Books can be browsed and filtered
+    * Books, in case of e-books, can be downloaded
+
 # v0.1.4
     * Update monitoring page view counts by putting unregistered endpoint paths
       into single category, to make published statistics more readable (there

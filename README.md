@@ -2,11 +2,14 @@
 
 ## Overview
 
-This is re-implementation of HomeApp in Go. Initial version can be still checked
-[here](https://github.com/dskrzypiec/homeApp).
+HomeApp is an application for handling I/O for Home Database which are designed to contains personal and private
+information. Motivations for creating this project can be read on my personal
+[blog post](https://dskrzypiec.dev/home-db/).
 
-Motivations for creating this project can be read on my personal [blog post](https://dskrzypiec.dev/home-db/).
+If you want to check HomeApp without compiling the project locally, you can visit
 
+* [https://homeappdev.dskrzypiec.dev](https://homeappdev.dskrzypiec.dev)
+* and use credentials `testuser/password` to log in
 
 ## Build
 
