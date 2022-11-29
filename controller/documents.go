@@ -195,7 +195,13 @@ func fileExtToContentType(fileExt string) string {
 		return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 	case "doc":
 		return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-	default:
+	case "epub":
+		return "application/epub+zip"
+	case "mobi":
+		return "application/x-mobipocket-ebook"
+	case "txt":
 		return "text/plain"
+	default:
+		return "application/octet-stream"
 	}
 }

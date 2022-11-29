@@ -130,6 +130,28 @@ func (c *Client) BookInsertNew(newBook NewBook) error {
 	return nil
 }
 
+// BookFile load from database content of given book, it's title and it's extension
+// name.
+func (c *Client) BookFile(bookId int) ([]byte, string, string, error) {
+	startTs := time.Now()
+	log.Info().Int("bookId", bookId).Msgf("[%s] start reading book file", dbBooksPrefix)
+
+	row := c.dbConn.QueryRow(bookFileQuery(), bookId)
+	var fileBytes []byte
+	var fileExt, title string
+	scanErr := row.Scan(&fileExt, &title, &fileBytes)
+	if scanErr != nil {
+		log.Error().Err(scanErr).Int("bookId", bookId).
+			Msgf("[%s] while loading book content", dbDocsPrefix)
+		return fileBytes, title, fileExt, scanErr
+	}
+
+	log.Info().Int("loadedBytes", len(fileBytes)).Int("bookId", bookId).
+		Dur("duration", time.Since(startTs)).Msgf("[%s] finished loading book content", dbDocsPrefix)
+
+	return fileBytes, title, fileExt, nil
+}
+
 func getMaxBookId(tx *sql.Tx) (int, error) {
 	var maxBookId int
 	row := tx.QueryRow("SELECT CASE WHEN MAX(BookId) IS NULL THEN 0 ELSE MAX(BookId) END FROM books")
@@ -263,8 +285,9 @@ func bookInsertNewQuery() string {
 func bookFileQuery() string {
 	return `
 		SELECT
-			d.FileExtension,
-			df.FileBytes
+			b.FileExtension,
+			b.Title,
+			bf.FileBytes
 		FROM
 			books b
 		INNER JOIN

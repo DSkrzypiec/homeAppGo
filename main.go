@@ -94,6 +94,7 @@ func main() {
 	endpoints.registerWithAuth("/books", booksContr.BooksViewHandler)
 	endpoints.registerWithAuth("/books-new", booksContr.BooksInsertForm)
 	endpoints.registerWithAuth("/books/upload", booksContr.InsertNewBook)
+	endpoints.registerWithAuth("/bookFile", booksContr.DownloadBook)
 	endpoints.registerWithAuth("/counters", counterContr.CountersViewHandler)
 	endpoints.registerWithAuth("/counters-new", counterContr.CountersInsertForm)
 	endpoints.registerWithAuth("/counters/upload", counterContr.CountersUploadNew)
