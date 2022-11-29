@@ -65,6 +65,11 @@ func main() {
 		TelegramClient: telegramClient,
 		UserAuth:       userAuth,
 	}
+	booksContr := controller.Books{
+		DbClient:       dbClient,
+		TelegramClient: telegramClient,
+		UserAuth:       userAuth,
+	}
 	finContr := controller.Finance{
 		DbClient:       dbClient,
 		TelegramClient: telegramClient,
@@ -86,6 +91,10 @@ func main() {
 	endpoints.register("/", loginContr.LoginFormHandler)
 	endpoints.register("/login", authHandlerMan.Login)
 	endpoints.registerWithAuth("/home", homeContr.HomeSummaryView)
+	endpoints.registerWithAuth("/books", booksContr.BooksViewHandler)
+	endpoints.registerWithAuth("/books-new", booksContr.BooksInsertForm)
+	endpoints.registerWithAuth("/books/upload", booksContr.InsertNewBook)
+	endpoints.registerWithAuth("/bookFile", booksContr.DownloadBook)
 	endpoints.registerWithAuth("/counters", counterContr.CountersViewHandler)
 	endpoints.registerWithAuth("/counters-new", counterContr.CountersInsertForm)
 	endpoints.registerWithAuth("/counters/upload", counterContr.CountersUploadNew)

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {{ template "common-header" }}
+    <style>
+        {{ template "common-css" }}
+    </style>
+</head>
+
+<body>
+    {{ template "common-logo" }}
+    {{ template "common-menu" }}
+
+    <a href="/books-new">Insert new book</a>
+
+    <h2>Books</h2>
+    {{ if .Error }}
+        <h3 style="color: red;">
+            Error: {{ .Error }}
+        </h3>
+    {{ end }}
+
+    <form action="/books" method="post">
+        <input type="text" name="bookFilter" minLength="2" required>
+        <input type="submit" value="Filter" />
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Author(s)</th>
+                <th>Publisher</th>
+            </tr>
+        </thead>
+        <tbody>
+        {{ range .Books }}
+            <tr>
+                <td>{{.Title}}</td>
+                <td>{{.Authors}}</td>
+                <td>{{.Publisher}}</td>
+            </tr>
+        {{ end}}
+        </tbody>
+    </table>
+</body>
+</html>

@@ -11,3 +11,10 @@ func toNullString(x *string) sql.NullString {
 	}
 	return sql.NullString{Valid: true, String: *x}
 }
+
+func toNullInt(n *int) sql.NullInt32 {
+	if n == nil {
+		return sql.NullInt32{Valid: false}
+	}
+	return sql.NullInt32{Valid: true, Int32: int32(*n)}
+}
