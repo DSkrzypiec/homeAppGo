@@ -14,6 +14,11 @@
     <a href="/books-new">Insert new book</a>
 
     <h2>Books</h2>
+    {{ if .Error }}
+        <h3 style="color: red;">
+            Error: {{ .Error }}
+        </h3>
+    {{ end }}
 
     <form action="/books" method="post">
         <input type="text" name="bookFilter" minLength="2" required>
@@ -25,11 +30,16 @@
             <tr>
                 <th>Title</th>
                 <th>Author(s)</th>
-                <th>Category</th>
+                <th>Publisher</th>
             </tr>
         </thead>
         <tbody>
         {{ range .Books }}
+            <tr>
+                <td>{{.Title}}</td>
+                <td>{{.Authors}}</td>
+                <td>{{.Publisher}}</td>
+            </tr>
         {{ end}}
         </tbody>
     </table>
