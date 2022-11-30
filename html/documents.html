@@ -4,6 +4,24 @@
     {{ template "common-header" }}
     <style>
         {{ template "common-css" }}
+
+        @media screen and (max-width: 650px) {
+            .document-table-narrow {
+                display: block;
+            }
+            .document-table-wide {
+                display: none;
+            }
+        }
+
+        @media screen and (min-width: 651px) {
+            .document-table-narrow {
+                display: none;
+            }
+            .document-table-wide {
+                display: block;
+            }
+        }
     </style>
 </head>
 
@@ -20,23 +38,52 @@
         <input type="submit" value="Filter" />
     </form>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Document</th>
-                <th>Document Date</th>
-                <th>Category</th>
-            </tr>
-        </thead>
-        <tbody>
-        {{ range .Documents }}
-            <tr>
-                <td><a href="/documentFile?id={{.Id}}" target="_blank">{{.Name}}</a></td>
-                <td>{{.DocumentDate}}</td>
-                <td>{{.Category}}</td>
-            </tr>
-        {{ end }}
-        </tbody>
-    </table>
+    <div class="document-table-narrow">
+        <table>
+            <thead>
+                <tr>
+                    <th>Document</th>
+                    <th>Document Date</th>
+                    <th>Category</th>
+                </tr>
+            </thead>
+            <tbody>
+            {{ range .Documents }}
+                <tr>
+                    <td><a href="/documentFile?id={{.Id}}" target="_blank">{{.Name}}</a></td>
+                    <td>{{.DocumentDate}}</td>
+                    <td>{{.Category}}</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="document-table-wide">
+        <table>
+            <thead>
+                <tr>
+                    <th>Document</th>
+                    <th>Upload Date</th>
+                    <th>Document Date</th>
+                    <th>Category</th>
+                    <th>File Ext</th>
+                    <th>File Size</th>
+                </tr>
+            </thead>
+            <tbody>
+            {{ range .Documents }}
+                <tr>
+                    <td><a href="/documentFile?id={{.Id}}" target="_blank">{{.Name}}</a></td>
+                    <td>{{.UploadDate}}</td>
+                    <td>{{.DocumentDate}}</td>
+                    <td>{{.Category}}</td>
+                    <td>{{.FileExtension}}</td>
+                    <td>{{.FileSizeBytes}}</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>

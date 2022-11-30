@@ -4,6 +4,24 @@
     {{ template "common-header" }}
     <style>
         {{ template "common-css" }}
+
+        @media screen and (max-width: 650px) {
+            .book-table-narrow {
+                display: block;
+            }
+            .book-table-wide {
+                display: none;
+            }
+        }
+
+        @media screen and (min-width: 651px) {
+            .book-table-narrow {
+                display: none;
+            }
+            .book-table-wide {
+                display: block;
+            }
+        }
     </style>
 </head>
 
@@ -25,23 +43,52 @@
         <input type="submit" value="Filter" />
     </form>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Title</th>
-                <th>Author(s)</th>
-                <th>Publisher</th>
-            </tr>
-        </thead>
-        <tbody>
-        {{ range .Books }}
-            <tr>
-                <td>{{.Title}}</td>
-                <td>{{.Authors}}</td>
-                <td>{{.Publisher}}</td>
-            </tr>
-        {{ end}}
-        </tbody>
-    </table>
+    <div class="book-table-narrow">
+        <table>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Author(s)</th>
+                    <th>Publisher</th>
+                </tr>
+            </thead>
+            <tbody>
+            {{ range .Books }}
+                <tr>
+                    <td>{{.Title}}</td>
+                    <td>{{.Authors}}</td>
+                    <td>{{.Publisher}}</td>
+                </tr>
+            {{ end}}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="book-table-wide">
+        <table>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Author(s)</th>
+                    <th>Publisher</th>
+                    <th>Publishing Year</th>
+                    <th>File Ext</th>
+                    <th>File Size</th>
+                </tr>
+            </thead>
+            <tbody>
+            {{ range .Books }}
+                <tr>
+                    <td>{{.Title}}</td>
+                    <td>{{.Authors}}</td>
+                    <td>{{.Publisher}}</td>
+                    <td>{{.PublishingYear}}</td>
+                    <td>{{.FileExtension}}</td>
+                    <td>{{.FileSize}}</td>
+                </tr>
+            {{ end}}
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>

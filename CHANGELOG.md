@@ -1,3 +1,7 @@
+# v0.2.1
+    * Make dynamic number of columns in table of documents based on screen size
+    * Make dynamic number of columns in table of books based on screen size
+
 # v0.2.0
     * Add (e)books page
     * Books (just info about a book) or e-book (info + e-book file) can be
