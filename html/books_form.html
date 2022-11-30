@@ -17,6 +17,21 @@
     <h2>Add a new book</h2>
     <div class="book-input-form">
         <form enctype="multipart/form-data" action="/books/upload" id="bookForm" method="post">
+            <label for="category">Category</label>
+            <select name="category" required>
+                <option value="math">Mathematics</option>
+                <option value="programming">Programming & IT</option>
+                <option value="fantasy">Fantasy</option>
+                <option value="literaryFiction">Literary Fiction</option>
+                <option value="scifi">Science Fiction</option>
+                <option value="thriller">Thriller</option>
+                <option value="biography">Biography</option>
+                <option value="art">Art</option>
+                <option value="philosophy">Philosophy</option>
+                <option value="documentary">Documentary</option>
+                <option value="other">Other</option>
+            </select>
+
             <label for="title">Book Title</label>
             <input type="text" name="title" placeholder="Title" required /> </br>
 
@@ -28,6 +43,13 @@
 
             <label for="publishYear">Publishing year</label>
             <input type="text" name="publishingYear" placeholder="2021" /> </br>
+
+            <label for="language">Language</label>
+            <select name="language" required>
+                <option value="EN">English</option>
+                <option value="PL">Polski</option>
+                <option value="RU">Русский</option>
+            </select>
 
             <label for="bookFile">Book File</label>
             <input type="file" name="bookFile" accept=".pdf,.zip,.mobi,.epub,.docx,.doc,.txt" /> </br>

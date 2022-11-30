@@ -94,12 +94,14 @@ CREATE TABLE IF NOT EXISTS books (
     Authors TEXT NOT NULL,
     Publisher TEXT NULL,
     PublishingYear INT NULL,
+    Category TEXT NOT NULL,
+    Language TEXT NOT NULL,
     FileExtension TEXT NULL,
     FileSize INT NULL,
     UploadDate TEXT NULL,
 
     PRIMARY KEY (BookId),
-    UNIQUE(Title, Authors, Publisher, PublishingYear)
+    UNIQUE(Title, Authors, Publisher, PublishingYear, Language, FileExtension)
 );
 
 CREATE TABLE IF NOT EXISTS bookFiles (
@@ -114,6 +116,8 @@ CREATE VIRTUAL TABLE IF NOT EXISTS booksFts5 USING fts5(
     Authors,
     Publisher,
     PublishingYear,
+    Category,
+    Language,
     FileExtension,
     UploadDate
 );

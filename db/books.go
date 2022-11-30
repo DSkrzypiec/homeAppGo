@@ -17,6 +17,8 @@ type Book struct {
 	Authors        string
 	Publisher      *string
 	PublishingYear *int
+	Category       string
+	Language       string
 	FileExtension  *string
 	FileSize       *int
 	UploadDate     string
@@ -28,6 +30,8 @@ type NewBook struct {
 	Authors        string
 	Publisher      *string
 	PublishingYear *int
+	Category       string
+	Language       string
 	FileExtension  *string
 	FileSize       *int
 	BookFile       []byte
@@ -47,10 +51,11 @@ func (c *Client) Books() ([]Book, error) {
 
 	var id int
 	var publishingYear, fileSize *int
-	var title, authors, uploadDate string
+	var title, authors, category, language, uploadDate string
 	var publisher, fileExt *string
 	for rows.Next() {
-		sErr := rows.Scan(&id, &title, &authors, &publisher, &publishingYear, &fileExt, &fileSize, &uploadDate)
+		sErr := rows.Scan(&id, &title, &authors, &publisher, &publishingYear, &category, &language,
+			&fileExt, &fileSize, &uploadDate)
 		if sErr != nil {
 			log.Warn().Err(sErr).Msgf("[%s] while scanning results of booksQuery", dbBooksPrefix)
 			continue
@@ -61,6 +66,8 @@ func (c *Client) Books() ([]Book, error) {
 			Authors:        authors,
 			Publisher:      publisher,
 			PublishingYear: publishingYear,
+			Category:       category,
+			Language:       language,
 			FileExtension:  fileExt,
 			FileSize:       fileSize,
 			UploadDate:     uploadDate,
@@ -88,10 +95,11 @@ func (c *Client) BooksFiltered(phrase string) ([]Book, error) {
 
 	var id int
 	var publishingYear, fileSize *int
-	var title, authors, uploadDate string
+	var title, authors, category, language, uploadDate string
 	var publisher, fileExt *string
 	for rows.Next() {
-		sErr := rows.Scan(&id, &title, &authors, &publisher, &publishingYear, &fileExt, &fileSize, &uploadDate)
+		sErr := rows.Scan(&id, &title, &authors, &publisher, &publishingYear, &category,
+			&language, &fileExt, &fileSize, &uploadDate)
 		if sErr != nil {
 			log.Warn().Err(sErr).Msgf("[%s] while scanning results of booksQuery", dbBooksPrefix)
 			continue
@@ -102,6 +110,8 @@ func (c *Client) BooksFiltered(phrase string) ([]Book, error) {
 			Authors:        authors,
 			Publisher:      publisher,
 			PublishingYear: publishingYear,
+			Category:       category,
+			Language:       language,
 			FileExtension:  fileExt,
 			FileSize:       fileSize,
 			UploadDate:     uploadDate,
@@ -208,8 +218,8 @@ func insertBookMeta(bookId int, newBook NewBook, tx *sql.Tx) error {
 
 	_, qErr := tx.Exec(
 		bookInsertNewMetaQuery(), bookId, newBook.Title, newBook.Authors,
-		toNullString(newBook.Publisher), toNullInt(newBook.PublishingYear),
-		toNullString(newBook.FileExtension), toNullInt(newBook.FileSize), uploadDate)
+		toNullString(newBook.Publisher), toNullInt(newBook.PublishingYear), newBook.Category,
+		newBook.Language, toNullString(newBook.FileExtension), toNullInt(newBook.FileSize), uploadDate)
 	if qErr != nil {
 		return qErr
 	}
@@ -221,7 +231,7 @@ func insertBookFts5(bookId int, newBook NewBook, tx *sql.Tx) error {
 	_, qErr := tx.Exec(
 		bookInsertNewFts5Query(), bookId, newBook.Title, newBook.Authors,
 		toNullString(newBook.Publisher), toNullInt(newBook.PublishingYear),
-		toNullString(newBook.FileExtension), uploadDate)
+		newBook.Category, newBook.Language, toNullString(newBook.FileExtension), uploadDate)
 	if qErr != nil {
 		return qErr
 	}
@@ -243,6 +253,12 @@ func (nb *NewBook) Validate() error {
 	if len(nb.Authors) == 0 {
 		return errors.New("book authors should be provided")
 	}
+	if len(nb.Category) == 0 {
+		return errors.New("book category should be provided")
+	}
+	if len(nb.Language) == 0 {
+		return errors.New("book language should be provided")
+	}
 	if len(nb.BookFile) > 0 {
 		if nb.FileExtension == nil || len(*nb.FileExtension) == 0 {
 			return errors.New("file extension should be provided")
@@ -259,6 +275,8 @@ func booksQuery() string {
 			Authors,
 			Publisher,
 			PublishingYear,
+			Category,
+			Language,
 			FileExtension,
 			FileSize,
 			UploadDate
@@ -277,6 +295,8 @@ func booksFilteredQuery() string {
 			b.Authors,
 			b.Publisher,
 			b.PublishingYear,
+			b.Category,
+			b.Language,
 			b.FileExtension,
 			b.FileSize,
 			b.UploadDate
@@ -294,20 +314,20 @@ func booksFilteredQuery() string {
 func bookInsertNewMetaQuery() string {
 	return `
 	INSERT INTO books (
-		BookId, Title, Authors, Publisher, PublishingYear, FileExtension,
-		FileSize, UploadDate
+		BookId, Title, Authors, Publisher, PublishingYear, Category, Language,
+		FileExtension, FileSize, UploadDate
 	)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 }
 
 func bookInsertNewFts5Query() string {
 	return `
 	INSERT INTO booksFts5 (
-		BookId, Title, Authors, Publisher, PublishingYear, FileExtension,
-		UploadDate
+		BookId, Title, Authors, Publisher, PublishingYear, Category,
+		Language, FileExtension, UploadDate
 	)
-	VALUES (?, ?, ?, ?, ?, ?, ?)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 }
 

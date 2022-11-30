@@ -34,6 +34,8 @@ type Book struct {
 	Authors        string
 	Publisher      *string
 	PublishingYear *int
+	Category       string
+	Language       string
 	FileExtension  *string
 	FileSize       *int
 }
@@ -108,6 +110,19 @@ func (b *Books) InsertNewBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var msg string
+	if buf.Len() > 0 {
+		msg = fmt.Sprintf("Uploaded new e-book [%s] by [%s] of size %.2f MB in [%s] category.",
+			newBook.Title, newBook.Authors, float64(buf.Len())/1000000.0, newBook.Category)
+	} else {
+		msg = fmt.Sprintf("Uploaded new book info [%s] by [%s] in [%s] category.",
+			newBook.Title, newBook.Authors, newBook.Category)
+	}
+	teleErr := SendTelegramMsgForUser(r, b.UserAuth, b.TelegramClient, b.DbClient, msg)
+	if teleErr != nil {
+		log.Error().Err(teleErr).Msgf("[%s] sending message to Telegram failed", contrFinPrefix)
+	}
+
 	log.Info().Dur("duration", time.Since(startTs)).
 		Msgf("[%s] finished parsing and saving new book", contrBookPrefix)
 
@@ -163,10 +178,12 @@ func (b *Books) DownloadBook(w http.ResponseWriter, r *http.Request) {
 }
 
 func formValuesToNewBook(r *http.Request, parsedBookFile []byte) db.NewBook {
+	category := r.FormValue("category")
 	titleFv := r.FormValue("title")
 	authorsFv := r.FormValue("authors")
 	publisherFv := r.FormValue("publisher")
 	publishingYearFv := r.FormValue("publishingYear")
+	language := r.FormValue("language")
 	fileExtFv := r.FormValue("fileExt")
 
 	var publisher *string
@@ -196,6 +213,8 @@ func formValuesToNewBook(r *http.Request, parsedBookFile []byte) db.NewBook {
 		Authors:        authorsFv,
 		Publisher:      publisher,
 		PublishingYear: publishingYear,
+		Category:       category,
+		Language:       language,
 		FileExtension:  fileExt,
 		FileSize:       fileSize,
 		BookFile:       parsedBookFile,
@@ -217,6 +236,8 @@ func booksToDisplay(books []db.Book) []Book {
 			Authors:        book.Authors,
 			Publisher:      book.Publisher,
 			PublishingYear: book.PublishingYear,
+			Category:       book.Category,
+			Language:       book.Language,
 			FileExtension:  book.FileExtension,
 			FileSize:       book.FileSize,
 		}

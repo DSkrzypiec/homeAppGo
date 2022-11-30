@@ -1,3 +1,7 @@
+# v0.2.2
+    * Extend fields (in the form and database) for books - category and language
+    * Add sending Telegram message after new book entry was inserted
+
 # v0.2.1
     * Make dynamic number of columns in table of documents based on screen size
     * Make dynamic number of columns in table of books based on screen size
