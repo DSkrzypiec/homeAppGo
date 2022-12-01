@@ -52,6 +52,7 @@ func main() {
 	authHandlerMan := auth.HandlerManager{UserAuthenticator: userAuth}
 	homeContr := controller.Home{
 		DbClient:    dbClient,
+		UserAuth:    userAuth,
 		AppVersion:  config.AppVersion,
 		CurrentHash: config.CurrentCommitSHA,
 	}

@@ -154,7 +154,7 @@ func (ua UserAuth) Check2FA(username string) (bool, error) {
 func (ua UserAuth) prepJwtString(user db.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"userId": user.UserId,
-		"exp":    time.Now().UTC().Add(time.Duration(ua.JwtExpMinutes) * time.Minute).Unix(),
+		"exp":    time.Now().UTC().Add(time.Duration(ua.JwtExpMinutes) * time.Minute).UnixMilli(),
 	})
 
 	tokenString, err := token.SignedString(ua.JwtSigningKey)

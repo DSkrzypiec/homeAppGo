@@ -28,7 +28,11 @@ func (lf *LoginForm) LoginFormHandler(w http.ResponseWriter, r *http.Request) {
 		tmpl.Execute(w, lf)
 		return
 	}
-
-	homeController := Home{DbClient: lf.DbClient, AppVersion: lf.AppVersion, CurrentHash: lf.CurrentHash}
+	homeController := Home{
+		DbClient:    lf.DbClient,
+		UserAuth:    lf.AuthManager.UserAuthenticator,
+		AppVersion:  lf.AppVersion,
+		CurrentHash: lf.CurrentHash,
+	}
 	homeController.HomeSummaryView(w, r)
 }

@@ -5,9 +5,17 @@
     <style>
         {{ template "common-css" }}
     </style>
+    <script>
+        function getSessionDeadline() {
+            return {{ .SessionExpUnix }};
+        }
+
+        {{ template "common-js" }}
+    </script>
 </head>
 
 <body>
+    {{ template "common-session-timer" }}
     {{ template "common-logo" }}
     {{ template "common-menu" }}
 
