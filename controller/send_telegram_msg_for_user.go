@@ -31,15 +31,15 @@ func SendTelegramMsgForUser(r *http.Request, userAuth auth.UserAuthenticator, tC
 		return cookieErr
 	}
 
-	isValid, userId, validErr := userAuth.IsJwtTokenValid(sessCookie.Value)
+	tokenStatus, validErr := userAuth.IsJwtTokenValid(sessCookie.Value)
 	if validErr != nil {
 		return validErr
 	}
-	if !isValid {
+	if !tokenStatus.IsValid {
 		return errors.New("JWT is invalid, message will not be sent")
 	}
 
-	user, uErr := dbClient.UserByUserId(userId)
+	user, uErr := dbClient.UserByUserId(tokenStatus.UserId)
 	if uErr != nil {
 		return fmt.Errorf("cannot send message, because getting user info failed: %v", uErr)
 	}

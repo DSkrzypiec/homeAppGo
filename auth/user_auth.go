@@ -26,8 +26,14 @@ var ErrInvalidUsernameOrPass = errors.New("invalid username or password")
 // authentication failed, then error should be non empty.
 type UserAuthenticator interface {
 	IsUserValid(username, password string) (string, error)
-	IsJwtTokenValid(jwtString string) (bool, int, error)
+	IsJwtTokenValid(jwtString string) (TokenStatus, error)
 	Check2FA(username string) (bool, error)
+}
+
+type TokenStatus struct {
+	IsValid      bool
+	UserId       int
+	TokenExpUnix int64
 }
 
 // UserAuth performs user authentication against user data in the main
@@ -73,7 +79,7 @@ func (ua UserAuth) IsUserValid(username, password string) (string, error) {
 
 // IsJwtTokenValid verifies whenever given JWT string is valid. That means was
 // generated and signed by this backend for existing user.
-func (ua UserAuth) IsJwtTokenValid(jwtString string) (bool, int, error) {
+func (ua UserAuth) IsJwtTokenValid(jwtString string) (TokenStatus, error) {
 	startTs := time.Now()
 	log.Info().Msgf("[%s] start jwt validation", authUserPrefix)
 
@@ -86,35 +92,47 @@ func (ua UserAuth) IsJwtTokenValid(jwtString string) (bool, int, error) {
 	if err != nil {
 		log.Error().Err(err).Str("jwt", jwtString).
 			Msgf("[%s] cannot parse given JWT")
-		return false, -1, err
+		return TokenStatus{}, err
 	}
 
 	if !token.Valid {
 		invalidErr := fmt.Errorf("token is no longer valid at %v", time.Now())
 		log.Error().Err(invalidErr).Msgf("[%s] jwt is no longer valid", authUserPrefix)
-		return false, -1, invalidErr
+		return TokenStatus{}, invalidErr
 	}
 
 	claims, claimsOk := token.Claims.(jwt.MapClaims)
 	if !claimsOk {
 		noClaimsErr := fmt.Errorf("token has not claims")
 		log.Error().Err(noClaimsErr).Msgf("[%s] jwt has no claims", authUserPrefix)
-		return false, -1, noClaimsErr
+		return TokenStatus{}, noClaimsErr
 	}
 
 	userId, isOk := claims["userId"]
 	if !isOk {
 		noUserId := fmt.Errorf("token has not userId claim")
 		log.Error().Err(noUserId).Msgf("[%s] jwt has no userId claim", authUserPrefix)
-		return false, -1, noUserId
+		return TokenStatus{}, noUserId
+	}
+
+	tokenExp, teIsOk := claims["exp"]
+	if !teIsOk {
+		noExp := fmt.Errorf("token has not exp claim for token expiration")
+		log.Error().Err(noExp).Msgf("[%s] jwt has no exp claim", authUserPrefix)
+		return TokenStatus{}, noExp
 	}
 
 	userIdInt := int(userId.(float64))
+	tokenExpInt := int64(tokenExp.(float64))
 	elapsed := time.Since(startTs)
-	log.Info().Int("userId", userIdInt).
+	log.Info().Int("userId", userIdInt).Int64("tokenExp", tokenExpInt).
 		Dur("duration", elapsed).Msgf("[%s] finished jwt validation", authUserPrefix)
 
-	return true, userIdInt, nil
+	return TokenStatus{
+		IsValid:      true,
+		UserId:       userIdInt,
+		TokenExpUnix: tokenExpInt,
+	}, nil
 }
 
 // Check2FA verifies second step in two-factor authentication which is via

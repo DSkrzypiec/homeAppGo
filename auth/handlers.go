@@ -86,22 +86,22 @@ func (hm *HandlerManager) CheckAuth(next func(http.ResponseWriter, *http.Request
 			return
 		}
 
-		isValid, userId, validErr := hm.UserAuthenticator.IsJwtTokenValid(sessCookie.Value)
+		tokenStatus, validErr := hm.UserAuthenticator.IsJwtTokenValid(sessCookie.Value)
 		if validErr != nil {
-			log.Error().Err(validErr).Int("userId", userId).Dur("duration", time.Since(startTs)).
+			log.Error().Err(validErr).Int("userId", tokenStatus.UserId).Dur("duration", time.Since(startTs)).
 				Msgf("[%s] there was error while validating JWT", authHandlerPrefix)
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
-		if !isValid {
-			log.Error().Int("userId", userId).Dur("duration", time.Since(startTs)).
+		if !tokenStatus.IsValid {
+			log.Error().Int("userId", tokenStatus.UserId).Dur("duration", time.Since(startTs)).
 				Msgf("[%s] session expired or credentials are incorrect, redirecting to login", authHandlerPrefix)
 			http.SetCookie(w, expiredSessionCookie())
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
 
-		log.Info().Int("userId", userId).Dur("duration", time.Since(startTs)).
+		log.Info().Int("userId", tokenStatus.UserId).Dur("duration", time.Since(startTs)).
 			Msgf("[%s] user session validation succeeded", authHandlerPrefix)
 
 		// It's fine! Letting traffic flow
@@ -117,11 +117,11 @@ func (hm *HandlerManager) IsSessionCookieValid(r *http.Request) (bool, error) {
 		return false, cookieErr
 	}
 
-	isValid, _, validErr := hm.UserAuthenticator.IsJwtTokenValid(sessCookie.Value)
+	tokenStatus, validErr := hm.UserAuthenticator.IsJwtTokenValid(sessCookie.Value)
 	if validErr != nil {
 		return false, validErr
 	}
-	if !isValid {
+	if !tokenStatus.IsValid {
 		return false, nil
 	}
 
@@ -140,16 +140,16 @@ func (hm *HandlerManager) TerminateSession(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	isValid, userId, validErr := hm.UserAuthenticator.IsJwtTokenValid(sessCookie.Value)
+	tokenStatus, validErr := hm.UserAuthenticator.IsJwtTokenValid(sessCookie.Value)
 	if validErr != nil {
-		log.Error().Err(validErr).Int("userId", userId).Dur("duration", time.Since(startTs)).
+		log.Error().Err(validErr).Int("userId", tokenStatus.UserId).Dur("duration", time.Since(startTs)).
 			Msgf("[%s] there was error while validating JWT - deleting cooking anyway", authHandlerPrefix)
 		http.SetCookie(w, expiredSessionCookie())
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	if !isValid {
-		log.Error().Int("userId", userId).Dur("duration", time.Since(startTs)).
+	if !tokenStatus.IsValid {
+		log.Error().Int("userId", tokenStatus.UserId).Dur("duration", time.Since(startTs)).
 			Msgf("[%s] session expired or credentials are incorrect, redirecting to login", authHandlerPrefix)
 		http.SetCookie(w, expiredSessionCookie())
 		http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -157,8 +157,8 @@ func (hm *HandlerManager) TerminateSession(w http.ResponseWriter, r *http.Reques
 	}
 
 	http.SetCookie(w, expiredSessionCookie())
-	log.Info().Int("userId", userId).Dur("duration", time.Since(startTs)).
-		Msgf("[%s] session terminated by user [%d]", authHandlerPrefix, userId)
+	log.Info().Int("userId", tokenStatus.UserId).Dur("duration", time.Since(startTs)).
+		Msgf("[%s] session terminated by user [%d]", authHandlerPrefix, tokenStatus.UserId)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
