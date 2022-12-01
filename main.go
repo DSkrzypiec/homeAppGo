@@ -83,6 +83,9 @@ func main() {
 		AppVersion:     config.AppVersion,
 		CurrentHash:    config.CurrentCommitSHA,
 	}
+	sessionContr := controller.Session{
+		UserAuth: userAuth,
+	}
 	endpoints := EndpointRegister{
 		PageViews:           pageViews,
 		AuthHandler:         &authHandlerMan,
@@ -107,6 +110,7 @@ func main() {
 	endpoints.registerWithAuth("/finance-new", finContr.FinanceInsertForm)
 	endpoints.registerWithAuth("/finance/upload", finContr.FinanceUploadFile)
 	endpoints.registerWithAuth("/logout", authHandlerMan.TerminateSession)
+	endpoints.registerWithAuth("/session/prolong", sessionContr.ProlongHandler)
 
 	log.Info().Msgf("Listening on :%d...", config.Port)
 	http.ListenAndServe(fmt.Sprintf(":%d", config.Port), nil)

@@ -27,6 +27,7 @@ var ErrInvalidUsernameOrPass = errors.New("invalid username or password")
 type UserAuthenticator interface {
 	IsUserValid(username, password string) (string, error)
 	IsJwtTokenValid(jwtString string) (TokenStatus, error)
+	RegenerateJwt(tokenStatus TokenStatus) (string, error)
 	Check2FA(username string) (bool, error)
 }
 
@@ -63,7 +64,7 @@ func (ua UserAuth) IsUserValid(username, password string) (string, error) {
 		return "", ErrInvalidUsernameOrPass
 	}
 
-	userToken, tokenErr := ua.prepJwtString(user)
+	userToken, tokenErr := ua.prepJwtString(user.UserId)
 	if tokenErr != nil {
 		log.Error().Err(tokenErr).Str("username", username).
 			Msgf("[%s] cannot sign user token", authUserPrefix)
@@ -135,6 +136,13 @@ func (ua UserAuth) IsJwtTokenValid(jwtString string) (TokenStatus, error) {
 	}, nil
 }
 
+// RegenerateJwt takes current session JWT and produce another one with shifted
+// timestamp of expiration. Other data stays without any change. This can be
+// used to prolong current user session.
+func (ua UserAuth) RegenerateJwt(tokenStatus TokenStatus) (string, error) {
+	return ua.prepJwtString(tokenStatus.UserId)
+}
+
 // Check2FA verifies second step in two-factor authentication which is via
 // Telegram channel. This step might be turned off via initial configuration.
 // In this case TelegramClient should be nil.
@@ -151,9 +159,9 @@ func (ua UserAuth) Check2FA(username string) (bool, error) {
 	return twoFaPassed, nil
 }
 
-func (ua UserAuth) prepJwtString(user db.User) (string, error) {
+func (ua UserAuth) prepJwtString(userId int) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userId": user.UserId,
+		"userId": userId,
 		"exp":    time.Now().UTC().Add(time.Duration(ua.JwtExpMinutes) * time.Minute).UnixMilli(),
 	})
 
