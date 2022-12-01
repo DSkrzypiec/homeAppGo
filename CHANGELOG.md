@@ -1,3 +1,8 @@
+# v0.3.0
+    * Add user session timer on /home page
+    * Add functionality of user session prolongation by click onto user session
+      timer on /home page
+
 # v0.2.2
     * Extend fields (in the form and database) for books - category and language
     * Add sending Telegram message after new book entry was inserted
