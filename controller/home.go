@@ -28,6 +28,11 @@ type HomeSummary struct {
 	DocumentsNumber          int
 	DocumentsSizeMb          string // float64 rounded to 2 decimal places
 	DocumentLatestUploadDate string
+	EbooksNumber             int
+	EbooksSizeMb             string // float64 rounded to 2 decimal places
+	EbookLatestUploadDate    string
+	BooksNumber              int
+	BookLatestUploadDate     string
 	FinancialLatestOrderDate string
 
 	AppVersion  string
@@ -69,6 +74,11 @@ func (h *Home) HomeSummaryView(w http.ResponseWriter, r *http.Request) {
 		DocumentsNumber:          dbSummary.DocumentsNumber,
 		DocumentsSizeMb:          fmt.Sprintf("%.2f", dbSummary.DocumentsSizeMb),
 		DocumentLatestUploadDate: dbSummary.DocumentLatestUploadDate,
+		EbooksNumber:             dbSummary.EbooksNumber,
+		EbooksSizeMb:             fmt.Sprintf("%.2f", dbSummary.EbooksSizeMb),
+		EbookLatestUploadDate:    dbSummary.EbookLatestUploadDate,
+		BooksNumber:              dbSummary.BooksNumber,
+		BookLatestUploadDate:     dbSummary.BookLatestUploadDate,
 		FinancialLatestOrderDate: dbSummary.FinancialLatestOrderDate,
 
 		AppVersion:  h.AppVersion,

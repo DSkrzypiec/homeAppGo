@@ -1,3 +1,6 @@
+# v0.4.0
+    * Add e-books and paper books info summary on the /home page
+
 # v0.3.0
     * Add user session timer on /home page
     * Add functionality of user session prolongation by click onto user session

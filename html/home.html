@@ -42,6 +42,16 @@
         <li>Latest document upload date: <b>{{.DocumentLatestUploadDate}}</b></li>
     </ul>
 
+    <h3>Books</h3>
+        <p>E-books and paper books statistics</p>
+    <ul>
+        <li>Number of e-books uploaded: <b>{{.EbooksNumber}}</b></li>
+        <li>Size of all e-books: <b>{{.EbooksSizeMb}}</b> MB</li>
+        <li>Latest e-book upload date: <b>{{.EbookLatestUploadDate}}</b></li>
+        <li>Number of paper books info uploaded: <b>{{.BooksNumber}}</b></li>
+        <li>Latest paper book info upload date: <b>{{.BookLatestUploadDate}}</b></li>
+    </ul>
+
     <h3>Finance</h3>
         <p>Latest uploaded transaction was from <b>{{.FinancialLatestOrderDate}}.</b></p>
 {{ end }}

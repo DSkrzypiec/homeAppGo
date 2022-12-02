@@ -15,6 +15,11 @@ type HomeSummary struct {
 	DocumentsNumber          int
 	DocumentsSizeMb          float64
 	DocumentLatestUploadDate string
+	EbooksNumber             int
+	EbooksSizeMb             float64
+	EbookLatestUploadDate    string
+	BooksNumber              int
+	BookLatestUploadDate     string
 	FinancialLatestOrderDate string
 }
 
@@ -25,12 +30,16 @@ func (c *Client) HomeSummary() (HomeSummary, error) {
 
 	row := c.dbConn.QueryRow(homeSummaryQuery())
 
-	var docNum int
-	var docLatestDate, finLatestDate string
-	var coldWaterAvg, hotWaterAvg, energyAvg, docSizeMb float64
+	var docNum, ebookNum, bookNum int
+	var docLatestDate, ebookLatestDate, bookLatestDate, finLatestDate string
+	var coldWaterAvg, hotWaterAvg, energyAvg, docSizeMb, ebookSizeMb float64
 
-	sErr := row.Scan(&coldWaterAvg, &hotWaterAvg, &energyAvg, &docNum, &docSizeMb,
-		&docLatestDate, &finLatestDate)
+	sErr := row.Scan(
+		&coldWaterAvg, &hotWaterAvg, &energyAvg,
+		&docNum, &docSizeMb, &docLatestDate,
+		&ebookNum, &ebookSizeMb, &ebookLatestDate,
+		&bookNum, &bookLatestDate,
+		&finLatestDate)
 	if sErr != nil {
 		log.Error().Err(sErr).Msgf("[%s] cannot scan homeSummaryQuery result", dbHomePrefix)
 		return HomeSummary{}, sErr
@@ -43,6 +52,11 @@ func (c *Client) HomeSummary() (HomeSummary, error) {
 		DocumentsNumber:          docNum,
 		DocumentsSizeMb:          docSizeMb,
 		DocumentLatestUploadDate: docLatestDate,
+		EbooksNumber:             ebookNum,
+		EbooksSizeMb:             ebookSizeMb,
+		EbookLatestUploadDate:    ebookLatestDate,
+		BooksNumber:              bookNum,
+		BookLatestUploadDate:     bookLatestDate,
 		FinancialLatestOrderDate: finLatestDate,
 	}
 
@@ -95,6 +109,39 @@ func homeSummaryQuery() string {
 		INNER JOIN
 			documentFiles df ON d.DocumentId = df.DocumentId
 	)
+	, booksSummary AS (
+		SELECT
+			SUM(
+				CASE
+					WHEN FileSize IS NOT NULL THEN 1
+					ELSE 0
+				END
+			) AS EbooksNumber,
+			CASE
+				WHEN SUM(FileSize) IS NULL THEN 0.0
+				ELSE SUM(FileSize) / 1000000.0
+			END AS EbooksSizeMb,
+			MAX(
+				CASE
+					WHEN FileSize IS NOT NULL THEN UploadDate
+					ELSE ''
+				END
+			) AS EbookLatestUploadDate,
+			SUM(
+				CASE
+					WHEN FileSize IS NULL THEN 1
+					ELSE 0
+				END
+			) AS BooksNumber,
+			MAX(
+				CASE
+					WHEN FileSize IS NULL THEN UploadDate
+					ELSE ''
+				END
+			) AS BookLatestUploadDate
+		FROM
+			books b
+	)
 	, finSummary AS (
 		SELECT
 			MAX(OrderDate) AS FinLatestOrderDate
@@ -110,11 +157,18 @@ func homeSummaryQuery() string {
 		ds.DocNumber,
 		ds.DocSizeMb,
 		ds.DocLatestDate,
+		bs.EbooksNumber,
+		bs.EbooksSizeMb,
+		bs.EbookLatestUploadDate,
+		bs.BooksNumber,
+		bs.BookLatestUploadDate,
 		fs.FinLatestOrderDate
 	FROM
 		countersSummary cs
 	CROSS JOIN
 		documentsSummary ds
+	CROSS JOIN
+		booksSummary bs
 	CROSS JOIN
 		finSummary fs
 	;
