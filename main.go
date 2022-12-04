@@ -23,7 +23,7 @@ const (
 
 func main() {
 	config := ParseConfigFlags()
-	setupZerolog()
+	config.setupZerolog()
 
 	dbClient, dbErr := db.NewClient(fmt.Sprintf("file:%s?cache=shared&mode=rw", config.DatabasePath))
 	if dbErr != nil {

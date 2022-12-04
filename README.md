@@ -45,6 +45,11 @@ HomeApp supports the following options
 * `-dbPath path` - path to Home Database
 * `-port 8080` - port on which HomeApp will be listening
 * `-telegram2fa` - if enabled, then HomeApp will use two-factor authentication (2FA) using Telegram channel. More details below.
+* `-publishViewsAfter 300` - numbers of minutes after which endpoints view
+      statistics will be published. If Telegram is configured, then it'll be sent
+      over the Telegram channel. Otherwise just logged
+* `-logDebug` - flag for enabling debug log level. If disabled, then "info" log level would be used
+* `-logConsole` - flag for using `ConsoleWriter` within `zerolog`. Convenient for local development but is less efficient then standard writer.
 
 
 ### 2FA via Telegram

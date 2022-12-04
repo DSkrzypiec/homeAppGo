@@ -1,3 +1,6 @@
+# v0.4.1
+    * Add flags for logger
+
 # v0.4.0
     * Add e-books and paper books info summary on the /home page
 

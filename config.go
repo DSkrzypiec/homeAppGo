@@ -29,6 +29,7 @@ type Config struct {
 	Telegram              *TelegramConfig
 	SessionTimeoutMinutes int
 	HttpClientTimeout     time.Duration
+	Logger                LoggerConfig
 	AppVersion            string
 	CurrentCommitSHA      string
 	PublishViewsAfter     time.Duration
@@ -39,6 +40,11 @@ type TelegramConfig struct {
 	ChannelId string
 }
 
+type LoggerConfig struct {
+	UseDebugLevel    bool
+	UseConsoleWriter bool
+}
+
 // Parse or fail.
 func ParseConfigFlags() Config {
 	telegram2fa := flag.Bool("telegram2fa", false, "Use Telegram for two-factor authentication")
@@ -47,6 +53,10 @@ func ParseConfigFlags() Config {
 	publishViewsAfter := flag.Int("publishViewsAfter", 300,
 		"After each 'x' minutes endpoints views statistics will be published")
 
+	logDebugLevel := flag.Bool("logDebug", true,
+		"Log events on at least debug level. Otherwise info level is assumed.")
+	logUseConsoleWriter := flag.Bool("logConsole", true,
+		"Use ConsoleWriter within zerolog - pretty but not efficient, mostly for development")
 	flag.Parse()
 
 	var telegramConfig *TelegramConfig
@@ -66,6 +76,11 @@ func ParseConfigFlags() Config {
 		}
 	}
 
+	loggerConfig := LoggerConfig{
+		UseDebugLevel:    *logDebugLevel,
+		UseConsoleWriter: *logUseConsoleWriter,
+	}
+
 	appVersion, commitSha := parseVersions(versionFile)
 
 	return Config{
@@ -76,11 +91,25 @@ func ParseConfigFlags() Config {
 
 		SessionTimeoutMinutes: SessionTimeoutMinutes,
 		HttpClientTimeout:     60 * time.Second,
+		Logger:                loggerConfig,
 
 		PublishViewsAfter: time.Duration(*publishViewsAfter) * time.Minute,
 
 		AppVersion:       appVersion,
 		CurrentCommitSHA: commitSha,
+	}
+}
+
+func (c *Config) setupZerolog() {
+	zerolog.DurationFieldUnit = time.Millisecond
+	if c.Logger.UseDebugLevel {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	}
+	if c.Logger.UseConsoleWriter {
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
+	} else {
+		log.Logger = zerolog.New(os.Stdout).With().Timestamp().Logger()
+		zerolog.TimeFieldFormat = time.RFC3339
 	}
 }
 
@@ -103,10 +132,4 @@ func parseVersions(input string) (string, string) {
 	shortSha := lines[1][:firstSHAChars] + "..."
 
 	return appVersion, shortSha
-}
-
-func setupZerolog() {
-	zerolog.DurationFieldUnit = time.Millisecond
-	zerolog.SetGlobalLevel(zerolog.DebugLevel)                                               // TODO: make flag for this
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339}) // TODO: make flag for this
 }
