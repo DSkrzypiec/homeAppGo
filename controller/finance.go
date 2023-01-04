@@ -165,19 +165,21 @@ func prepUploadStats(newTransactions []finance.Transaction) UploadStats {
 }
 
 func (f *Finance) getMonthlyAgg() ([]FinancialMonthlyAgg, error) {
-	const year = 2022 // TODO
+	now := time.Now()
 	aggs := make([]FinancialMonthlyAgg, 0, 12)
 
 	for month := 1; month <= 12; month++ {
-		ts, dErr := f.DbClient.FinTransMonthly(2022, month)
+		currDate := now.AddDate(0, -1*month, 0)
+		currMonth := int(currDate.Month())
+		ts, dErr := f.DbClient.FinTransMonthly(currDate.Year(), currMonth)
 		if dErr != nil {
 			return aggs, dErr
 		}
-		monthStr := strconv.Itoa(month)
-		if month < 10 {
+		monthStr := strconv.Itoa(currMonth)
+		if currMonth < 10 {
 			monthStr = "0" + monthStr
 		}
-		yearMonth := fmt.Sprintf("%d-%s", year, monthStr)
+		yearMonth := fmt.Sprintf("%d-%s", currDate.Year(), monthStr)
 		aggs = append(aggs, transAgg(yearMonth, ts))
 	}
 
