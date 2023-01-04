@@ -1,3 +1,6 @@
+# v0.4.2
+    * Fix hardcoded 2022 year in financial summary
+
 # v0.4.1
     * Add flags for logger
 
