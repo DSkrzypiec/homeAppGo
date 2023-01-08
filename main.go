@@ -76,6 +76,11 @@ func main() {
 		TelegramClient: telegramClient,
 		UserAuth:       userAuth,
 	}
+	finExpContr := controller.FinanceExplorer{
+		DbClient:       dbClient,
+		TelegramClient: telegramClient,
+		UserAuth:       userAuth,
+	}
 	loginContr := controller.LoginForm{
 		TelegramClient: telegramClient,
 		AuthManager:    authHandlerMan,
@@ -109,6 +114,7 @@ func main() {
 	endpoints.registerWithAuth("/finance", finContr.FinanceViewHandler)
 	endpoints.registerWithAuth("/finance-new", finContr.FinanceInsertForm)
 	endpoints.registerWithAuth("/finance/upload", finContr.FinanceUploadFile)
+	endpoints.registerWithAuth("/finance-explorer", finExpContr.FinanceExplorerViewHandler)
 	endpoints.registerWithAuth("/logout", authHandlerMan.TerminateSession)
 	endpoints.registerWithAuth("/session/prolong", sessionContr.ProlongHandler)
 
