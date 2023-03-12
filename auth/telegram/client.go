@@ -21,5 +21,4 @@ func NewClient(httpClient *http.Client, botToken string, channelId string) *Clie
 		botToken:   botToken,
 		channelId:  chatIdInt,
 	}
-
 }

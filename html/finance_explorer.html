@@ -20,51 +20,30 @@
 
     <a href="/finance">Browse finance</a>
 
+    <form action="/finance-explorer" method="post">
+        <input type="text" name="transactionsFilter" minLength="2" required>
+        <input type="submit" value="Filter" />
+    </form>
+
     <div class="my-chart">
         <table class="charts-css column show-primary-axis show-4-secondary-axes show-labels data-spacing-4">
             <caption> Front End Developer Salary </caption>
             <thead>
                 <tr>
-                  <th scope="col">Year</th>
-                  <th scope="col">Income</th>
+                  <th scope="col">Month</th>
+                  <th scope="col">Stats</th>
                 </tr>
             </thead>
             <tbody>
+            {{ range .MonthlyChartData }}
                 <tr>
-                  <th scope="row">2016</th>
-                  <td style="--size: calc( 40 / 100 );">
-                        <span class="data">$40k</span>
-                        <span class="tooltip">Aggregated payment was $40k</span>
-                  </td>
+                    <th scope="row">{{.MonthStr}}</th>
+                    <td style="--size: {{.AggValue}};">
+                        <span class="data">{{.DataLabel}}</span>
+                        <span class="tooltip">{{.Tooltip}}</span>
+                    </td>
                 </tr>
-                <tr>
-                  <th scope="row">2017</th>
-                  <td style="--size: calc( 60 / 100 );">
-                        <span class="data">$60k</span>
-                        <span class="tooltip">Aggregated payment was $60k</span>
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row">2018</th>
-                  <td style="--size: calc( 75 / 100 );">
-                        <span class="data">$75k</span>
-                        <span class="tooltip">Aggregated payment was $75k</span>
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row">2019</th>
-                  <td style="--size: calc( 90 / 100 );">
-                        <span class="data">$90k</span>
-                        <span class="tooltip">Aggregated payment was $90k</span>
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row">2020</th>
-                  <td style="--size: calc( 100 / 100 );">
-                        <span class="data">$100k</span>
-                        <span class="tooltip">Aggregated payment was $100k</span>
-                  </td>
-                </tr>
+            {{ end }}
             </tbody>
         </table>
     </div>

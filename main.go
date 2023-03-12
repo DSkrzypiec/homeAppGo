@@ -119,7 +119,10 @@ func main() {
 	endpoints.registerWithAuth("/session/prolong", sessionContr.ProlongHandler)
 
 	log.Info().Msgf("Listening on :%d...", config.Port)
-	http.ListenAndServe(fmt.Sprintf(":%d", config.Port), nil)
+	lasErr := http.ListenAndServe(fmt.Sprintf(":%d", config.Port), nil)
+	if lasErr != nil {
+		log.Panic().Err(lasErr).Msgf("Cannot start the server")
+	}
 }
 
 type EndpointRegister struct {
