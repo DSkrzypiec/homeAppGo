@@ -5,6 +5,7 @@ import (
 	"homeApp/auth"
 	"homeApp/auth/telegram"
 	"homeApp/db"
+	"homeApp/finance"
 	"homeApp/front"
 	"net/http"
 
@@ -63,6 +64,11 @@ func (fw *FinanceExplorer) FinanceExplorerViewHandler(w http.ResponseWriter, r *
 		// TODO...
 	}
 	fmt.Printf("Transactions: %v\n", transactions)
+	grouped := finance.GroupTransMonthly(transactions)
+
+	for yearMonth, trans := range grouped {
+		fmt.Printf("[%d.%d] - %d transactions\n", yearMonth.Year, yearMonth.Month, len(trans))
+	}
 
 	tmpl := front.FinanceExplorer()
 	tmpl.Execute(w, todoPreprMockData())

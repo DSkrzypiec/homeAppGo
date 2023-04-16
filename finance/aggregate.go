@@ -7,9 +7,23 @@ import (
 	"strconv"
 )
 
-//
+// GroupTransMonthly groups transactions in monthly slices. Grouping is done by
+// OrderDate field.
 func GroupTransMonthly(trans []db.BankTransaction) map[MonthDate][]db.BankTransaction {
 	dateToTrans := make(map[MonthDate][]db.BankTransaction)
+
+	for _, t := range trans {
+		date, dErr := parseMonthDate(t.OrderDate)
+		if dErr != nil {
+			// Correct date format in BankTransaction is assumed. Data with
+			// incorrect date format will be ignored in the aggregation.
+			continue
+		}
+		if _, dateExist := dateToTrans[date]; !dateExist {
+			dateToTrans[date] = make([]db.BankTransaction, 0, 100)
+		}
+		dateToTrans[date] = append(dateToTrans[date], t)
+	}
 
 	return dateToTrans
 }
@@ -29,7 +43,7 @@ func (md *MonthDate) String() string {
 }
 
 // Parses MonthDate based on string. Assuming YYYY-MM-dd format.
-func ParseMonthDate(input string) (MonthDate, error) {
+func parseMonthDate(input string) (MonthDate, error) {
 	if len(input) < 7 {
 		return MonthDate{}, errors.New("given input is too short, expected at least 7 chars")
 	}
