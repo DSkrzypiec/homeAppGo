@@ -59,7 +59,7 @@ func TestGroupTransMonthlyBasic(t *testing.T) {
 		{TransactionId: 6, OrderDate: "2023-01-01"},
 	}
 
-	grouped := GroupTransMonthly(ts)
+	grouped := groupTransMonthly(ts)
 	if len(grouped) != 3 {
 		t.Errorf("Expected grouped transaction to have 3 months, but got: %d", len(grouped))
 	}

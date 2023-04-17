@@ -25,7 +25,7 @@ type MonthlyAgg struct {
 // AggregateMonthly performs monthly grouping on given set of BankTransactions.
 func AggregateMonthly(transactions []db.BankTransaction, defaultCurrency string) map[MonthDate]MonthlyAgg {
 	aggs := make(map[MonthDate]MonthlyAgg)
-	monthlyGroups := GroupTransMonthly(transactions)
+	monthlyGroups := groupTransMonthly(transactions)
 	for monthDate, trans := range monthlyGroups {
 		aggs[monthDate] = aggregateSingleMonth(monthDate.String(), defaultCurrency, trans)
 	}
@@ -77,7 +77,7 @@ func aggregateSingleMonth(dateMonth string, defaultCurrency string, monthTransac
 
 // GroupTransMonthly groups transactions in monthly slices. Grouping is done by
 // OrderDate field.
-func GroupTransMonthly(trans []db.BankTransaction) map[MonthDate][]db.BankTransaction {
+func groupTransMonthly(trans []db.BankTransaction) map[MonthDate][]db.BankTransaction {
 	dateToTrans := make(map[MonthDate][]db.BankTransaction)
 
 	for _, t := range trans {
