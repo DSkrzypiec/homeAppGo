@@ -64,10 +64,11 @@ func (fw *FinanceExplorer) FinanceExplorerViewHandler(w http.ResponseWriter, r *
 		// TODO...
 	}
 	fmt.Printf("Transactions: %v\n", transactions)
-	grouped := finance.GroupTransMonthly(transactions)
+	//grouped := finance.GroupTransMonthly(transactions)
+	agg := finance.AggregateMonthly(transactions, "PLN")
 
-	for yearMonth, trans := range grouped {
-		fmt.Printf("[%d.%d] - %d transactions\n", yearMonth.Year, yearMonth.Month, len(trans))
+	for key, stats := range agg {
+		fmt.Printf("[%s] - %v transactions\n", key.String(), stats)
 	}
 
 	tmpl := front.FinanceExplorer()

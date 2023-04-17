@@ -7,6 +7,74 @@ import (
 	"strconv"
 )
 
+// MonthlyAgg represents statistics regarding monthly batch of financial transactions.
+type MonthlyAgg struct {
+	MonthDate         string
+	NumOfTransactions int
+	NumOfInflows      int
+	NumOfOutflows     int
+	InflowsAmountSum  float64
+	OutflowsAmountSum float64
+	// TODO: Add aggregates for other currencies
+
+	// "Top" here means by absolute value of AmountValue
+	TopInflow  db.BankTransaction
+	TopOutflow db.BankTransaction
+}
+
+// AggregateMonthly performs monthly grouping on given set of BankTransactions.
+func AggregateMonthly(transactions []db.BankTransaction, defaultCurrency string) map[MonthDate]MonthlyAgg {
+	aggs := make(map[MonthDate]MonthlyAgg)
+	monthlyGroups := GroupTransMonthly(transactions)
+	for monthDate, trans := range monthlyGroups {
+		aggs[monthDate] = aggregateSingleMonth(monthDate.String(), defaultCurrency, trans)
+	}
+	return aggs
+}
+
+// Aggregates transactions from single month into MonthlyAgg.
+func aggregateSingleMonth(dateMonth string, defaultCurrency string, monthTransactions []db.BankTransaction) MonthlyAgg {
+	var (
+		inflows, outflows             int
+		inflowsAmount, outflowsAmount float64
+		topInflowTransaction          db.BankTransaction
+		topOutflowTransaction         db.BankTransaction
+	)
+	for _, t := range monthTransactions {
+		if t.AmountCurrency != defaultCurrency {
+			// TODO: This will be handeled in the future
+			continue
+		}
+
+		if t.AmountValue >= 0 {
+			inflows++
+			inflowsAmount += t.AmountValue
+			if t.AmountValue > topInflowTransaction.AmountValue {
+				tmp := t
+				topInflowTransaction = tmp
+			}
+		} else {
+			outflows++
+			outflowsAmount += t.AmountValue
+			if t.AmountValue < topOutflowTransaction.AmountValue {
+				tmp := t
+				topOutflowTransaction = tmp
+			}
+		}
+	}
+
+	return MonthlyAgg{
+		MonthDate:         dateMonth,
+		NumOfTransactions: len(monthTransactions),
+		NumOfInflows:      inflows,
+		NumOfOutflows:     outflows,
+		InflowsAmountSum:  inflowsAmount,
+		OutflowsAmountSum: outflowsAmount,
+		TopInflow:         topInflowTransaction,
+		TopOutflow:        topOutflowTransaction,
+	}
+}
+
 // GroupTransMonthly groups transactions in monthly slices. Grouping is done by
 // OrderDate field.
 func GroupTransMonthly(trans []db.BankTransaction) map[MonthDate][]db.BankTransaction {

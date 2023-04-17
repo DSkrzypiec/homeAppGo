@@ -5,6 +5,50 @@ import (
 	"testing"
 )
 
+func TestAggregateSingleMonth(t *testing.T) {
+	// OrderDate is omitted, because it's assumed that those transactions are from the same month.
+	ts := []db.BankTransaction{
+		{TransactionId: 1, AmountCurrency: "PLN", AmountValue: -100.0},
+		{TransactionId: 2, AmountCurrency: "PLN", AmountValue: -200.0},
+		{TransactionId: 3, AmountCurrency: "PLN", AmountValue: 2000.0},
+		{TransactionId: 4, AmountCurrency: "USD", AmountValue: -20.0},
+		{TransactionId: 5, AmountCurrency: "EUR", AmountValue: 10.0},
+		{TransactionId: 6, AmountCurrency: "PLN", AmountValue: 1000.0},
+		{TransactionId: 7, AmountCurrency: "PLN", AmountValue: -100.0},
+		{TransactionId: 8, AmountCurrency: "PLN", AmountValue: -50.0},
+		{TransactionId: 9, AmountCurrency: "PLN", AmountValue: 0.0},
+	}
+
+	dateStr := "2023-01"
+	defaultCurrency := "PLN"
+	stats := aggregateSingleMonth(dateStr, defaultCurrency, ts)
+
+	if stats.MonthDate != dateStr {
+		t.Errorf("Expected MonthDate=%s, but got %s", dateStr, stats.MonthDate)
+	}
+	if stats.NumOfTransactions != 9 {
+		t.Errorf("Expected 9 transactions, got: %d", stats.NumOfTransactions)
+	}
+	if stats.NumOfInflows != 3 {
+		t.Errorf("Expected 3 inflows, got: %d", stats.NumOfInflows)
+	}
+	if stats.NumOfOutflows != 4 {
+		t.Errorf("Expected 4 outflows, got: %d", stats.NumOfOutflows)
+	}
+	if stats.InflowsAmountSum != 3000.0 {
+		t.Errorf("Expected inflows sums up to 3000.0, but got: %f", stats.InflowsAmountSum)
+	}
+	if stats.OutflowsAmountSum != -450.0 {
+		t.Errorf("Expected outflows sums up to -450.0, but got: %f", stats.OutflowsAmountSum)
+	}
+	if stats.TopInflow != ts[2] {
+		t.Errorf("Expected top inflow to be %v, but got: %v", ts[2], stats.TopInflow)
+	}
+	if stats.TopOutflow != ts[1] {
+		t.Errorf("Expected top outflow to be %v, but got: %v", ts[1], stats.TopOutflow)
+	}
+}
+
 func TestGroupTransMonthlyBasic(t *testing.T) {
 	ts := []db.BankTransaction{
 		{TransactionId: 1, OrderDate: "2023-01-15"},
