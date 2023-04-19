@@ -1,3 +1,6 @@
+# 0.5.1
+    * Changed column chart to bar chart in Financial Explorer
+
 # 0.5.0
     * First working version with Finance Explorer - monthly aggregated chart
       for filtered transactions.
