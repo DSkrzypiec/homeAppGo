@@ -89,7 +89,7 @@ func (c *Client) FinTransByDescription(phrase string) ([]BankTransaction, error)
 func (c *Client) finQueryTransactions(query string, args ...interface{}) ([]BankTransaction, error) {
 	startTs := time.Now()
 	transactions := make([]BankTransaction, 0, 500)
-	log.Info().Msgf("[%s] start reading financial transactions for query [%s]", dbFinPrefix, query)
+	log.Info().Msgf("[%s] start reading financial transactions", dbFinPrefix)
 
 	rows, qErr := c.dbConn.Query(query, args...)
 	if qErr != nil {

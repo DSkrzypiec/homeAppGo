@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"homeApp/db"
+	"sort"
 	"strconv"
 )
 
@@ -20,6 +21,78 @@ type MonthlyAgg struct {
 	// "Top" here means by absolute value of AmountValue
 	TopInflow  db.BankTransaction
 	TopOutflow db.BankTransaction
+}
+
+// Describe describes monthly aggregation as formatted string.
+func (ma *MonthlyAgg) Describe() string {
+	return fmt.Sprintf(`Transactions: %d <br>
+Inflows: (%d, %.2fzł) <br>
+Outflows: (%d, %.2fzł)`,
+		ma.NumOfTransactions, ma.NumOfInflows, ma.InflowsAmountSum, ma.NumOfOutflows,
+		ma.OutflowsAmountSum)
+}
+
+// TODO
+type MonthlyChartPoint struct {
+	Date           MonthDate
+	MonthStr       string
+	AggValueScaled float64 // needs to be from [0,1] interval
+	DataLabel      string
+	Tooltip        string
+}
+
+// TODO
+type MonthlyChart []MonthlyChartPoint
+
+// TODO: Docs + rename from Chart to chart or something
+func AggregatesMonthlyToChart(aggs map[MonthDate]MonthlyAgg) MonthlyChart {
+	chart := make(MonthlyChart, 0, len(aggs))
+	maxAbsFlowVal := maxAbsMonthlyAmountSum(aggs)
+
+	if maxAbsFlowVal == 0.0 {
+		// TODO: What actually we want to do in this case?
+		return chart
+	}
+
+	// TODO: Handle date filtration (to last 12 months). Here or in SQL?
+	// TODO: For now we aggregate only outflows. Need to think if outflows should be selected by toggle on UI
+
+	for monthDate, agg := range aggs {
+		newPoint := MonthlyChartPoint{
+			Date:           monthDate,
+			MonthStr:       monthDate.String(),
+			AggValueScaled: (-1.0 * agg.OutflowsAmountSum) / maxAbsFlowVal,
+			DataLabel:      fmt.Sprintf("%.2fzł", agg.OutflowsAmountSum),
+			Tooltip:        agg.Describe(),
+		}
+		chart = append(chart, newPoint)
+	}
+
+	sort.SliceStable(chart, func(i, j int) bool {
+		if chart[i].Date.Year == chart[j].Date.Year {
+			return chart[i].Date.Month < chart[j].Date.Month
+		}
+		return chart[i].Date.Year < chart[j].Date.Year
+	})
+
+	return chart
+}
+
+// Calculates max absolute value based on both InflowsAmountSum and OutflowsAmountSum across all monthly aggregations.
+func maxAbsMonthlyAmountSum(aggs map[MonthDate]MonthlyAgg) float64 {
+	maxAbs := 0.0
+	for _, agg := range aggs {
+		// TODO: For now we aggregate only outflows. Need to think if outflows should be selected by toggle on UI
+		/*
+			if agg.InflowsAmountSum > maxAbs {
+				maxAbs = agg.InflowsAmountSum
+			}
+		*/
+		if -1.0*agg.OutflowsAmountSum > maxAbs {
+			maxAbs = -1.0 * agg.OutflowsAmountSum
+		}
+	}
+	return maxAbs
 }
 
 // AggregateMonthly performs monthly grouping on given set of BankTransactions.
@@ -42,7 +115,7 @@ func aggregateSingleMonth(dateMonth string, defaultCurrency string, monthTransac
 	)
 	for _, t := range monthTransactions {
 		if t.AmountCurrency != defaultCurrency {
-			// TODO: This will be handeled in the future
+			// TODO: This will be handeled in the future. Probably by performing additional aggregation by currency.
 			continue
 		}
 

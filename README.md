@@ -9,7 +9,7 @@ information. Motivations for creating this project can be read on my personal
 If you want to check HomeApp without compiling the project locally, you can visit
 
 * [https://homeappdev.dskrzypiec.dev](https://homeappdev.dskrzypiec.dev) or
-  [http://35.157.102.33](http://35.157.102.33)
+    [http://3.74.170.81](http://3.74.170.81)
 * and use credentials `testuser/password` to log in
 
 ## Build

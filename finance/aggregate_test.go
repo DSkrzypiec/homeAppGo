@@ -49,6 +49,27 @@ func TestAggregateSingleMonth(t *testing.T) {
 	}
 }
 
+func TestMaxAbsMonthlyAmountSum(t *testing.T) {
+	ts := []db.BankTransaction{
+		{TransactionId: 1, AmountCurrency: "PLN", OrderDate: "2023-01-01", AmountValue: -100.0},
+		{TransactionId: 2, AmountCurrency: "PLN", OrderDate: "2023-01-21", AmountValue: -200.0},
+		{TransactionId: 3, AmountCurrency: "PLN", OrderDate: "2023-02-01", AmountValue: 2000.0},
+		{TransactionId: 4, AmountCurrency: "USD", OrderDate: "2023-02-09", AmountValue: -20.0},
+		{TransactionId: 5, AmountCurrency: "EUR", OrderDate: "2023-03-01", AmountValue: 10.0},
+		{TransactionId: 6, AmountCurrency: "PLN", OrderDate: "2023-03-10", AmountValue: 1000.0},
+		{TransactionId: 7, AmountCurrency: "PLN", OrderDate: "2023-01-01", AmountValue: -100.0},
+		{TransactionId: 8, AmountCurrency: "PLN", OrderDate: "2023-04-01", AmountValue: -50.0},
+		{TransactionId: 9, AmountCurrency: "PLN", OrderDate: "2023-04-05", AmountValue: 0.0},
+	}
+
+	aggs := AggregateMonthly(ts, "PLN")
+	maxAbs := maxAbsMonthlyAmountSum(aggs)
+
+	if maxAbs != 400.0 {
+		t.Errorf("Expected absolute max of flows to be %f, got %f", 400.0, maxAbs)
+	}
+}
+
 func TestGroupTransMonthlyBasic(t *testing.T) {
 	ts := []db.BankTransaction{
 		{TransactionId: 1, OrderDate: "2023-01-15"},
