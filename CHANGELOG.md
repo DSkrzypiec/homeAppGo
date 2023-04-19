@@ -1,3 +1,7 @@
+# 0.5.0
+    * First working version with Finance Explorer - monthly aggregated chart
+      for filtered transactions.
+
 # v0.4.2
     * Fix hardcoded 2022 year in financial summary
 

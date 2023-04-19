@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Charts css test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/charts.css/dist/charts.min.css">
+
+    <style>
+        .my-chart {
+            height: 300px;
+            max-width: 600px;
+            margin: 50px auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="my-chart">
+        <table class="charts-css column show-primary-axis show-4-secondary-axes show-labels data-spacing-4">
+            <caption> Front End Developer Salary </caption>
+            <thead>
+                <tr>
+                  <th scope="col">Year</th>
+                  <th scope="col">Income</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                  <th scope="row">2016</th>
+                  <td style="--size: calc( 40 / 100 );">
+                        <span class="data">$40k</span>
+                        <span class="tooltip">Aggregated payment was $40k</span>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">2017</th>
+                  <td style="--size: calc( 60 / 100 );">
+                        <span class="data">$60k</span>
+                        <span class="tooltip">Aggregated payment was $60k</span>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">2018</th>
+                  <td style="--size: calc( 75 / 100 );">
+                        <span class="data">$75k</span>
+                        <span class="tooltip">Aggregated payment was $75k</span>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">2019</th>
+                  <td style="--size: calc( 90 / 100 );">
+                        <span class="data">$90k</span>
+                        <span class="tooltip">Aggregated payment was $90k</span>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">2020</th>
+                  <td style="--size: calc( 100 / 100 );">
+                        <span class="data">$100k</span>
+                        <span class="tooltip">Aggregated payment was $100k</span>
+                  </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

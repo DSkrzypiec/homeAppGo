@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {{ template "common-header" }}
+    <style>
+        {{ template "common-css" }}
+
+        .my-chart {
+            height: 300px;
+            max-width: 600px;
+            margin: 50px auto;
+        }
+    </style>
+</head>
+
+<body>
+    {{ template "common-logo" }}
+    {{ template "common-menu" }}
+    <h1>Finance explorer</h1>
+
+    <a href="/finance">Browse finance</a>
+
+    <form action="/finance-explorer" method="post">
+        <input type="text" name="transactionsFilter" minLength="2" required>
+        <input type="submit" value="Filter" />
+    </form>
+
+    <div class="my-chart">
+        <table class="charts-css column show-primary-axis show-4-secondary-axes show-heading show-labels data-spacing-4">
+            <caption> Monthly transactions aggregation for transaction like '{{.Phrase}}'</caption>
+            <thead>
+                <tr>
+                  <th scope="col">Month</th>
+                  <th scope="col">Stats</th>
+                </tr>
+            </thead>
+            <tbody>
+            {{ range .MonthlyChartData }}
+                <tr>
+                    <th scope="row">{{.MonthStr}}</th>
+                    <td style="--size: {{.AggValue}};">
+                        <span class="data">{{.DataLabel}}</span>
+                        <span class="tooltip">{{.Tooltip}}</span>
+                    </td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
