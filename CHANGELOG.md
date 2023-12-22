@@ -1,3 +1,6 @@
+# 0.5.2
+    * Increased document file size from 100 MB to 275 MB
+
 # 0.5.1
     * Changed column chart to bar chart in Financial Explorer
 
