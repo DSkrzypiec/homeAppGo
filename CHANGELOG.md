@@ -1,3 +1,6 @@
+# 0.5.3
+    * Go back to 100 MB document file limit. Current EC2 is too small for that.
+
 # 0.5.2
     * Increased document file size from 100 MB to 275 MB
 

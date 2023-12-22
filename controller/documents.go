@@ -19,7 +19,7 @@ import (
 
 const (
 	contrDocPrefix  = "controller/docs"
-	maxDocumentSize = int64(275 * 1024 * 1024) // 300 MiB
+	maxDocumentSize = int64(100 * 1024 * 1024) // 100 MiB
 )
 
 type Documents struct {
